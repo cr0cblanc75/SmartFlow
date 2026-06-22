@@ -40,7 +40,7 @@ The app is dynamicaly update. You don't need to relaunch everytime the code with
 ├── assets
 │   └── images
 ├── scripts
-│   └── HERE.js
+│   └── HERE.js <-- to start the backend
 ├── src
 │   ├── app
 │   │   ├── _layout.tsx
