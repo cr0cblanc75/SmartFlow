@@ -1,56 +1,82 @@
-# Welcome to your Expo app 👋
+# Welcome to SmartFlow 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This is an [Expo](https://expo.dev) project.
 
 ## Get started
 
 1. Install dependencies
 
-   ```bash
-   npm install
-   ```
+    ```bash
+    npm install
+    ```
 
-2. Start the app
+2. Start the app (don't forget to be in the right folder)
 
-   ```bash
-   npx expo start
-   ```
+    ```bash
+    npx expo start -c
+    ```
 
-In the output, you'll find options to open the app in a
+3. Then you should see a QR_code in the terminal. Go at [ExpoGo]('https://expo.dev/go') and download on your mobile phone the latest version of the APK.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+    ```bash
+    SDK.56
+    ```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Then scan the QR_code and see the result :)
+<br>
+<br>
 
-## Get a fresh project
+## To know
 
-When you're ready, run:
+The app is dynamicaly update. You don't need to relaunch everytime the code with the procedure above (starting at 2.). _Except if you have modify the backend - have fun guys_
 
-```bash
-npm run reset-project
+<br><br>
+
+## 📁 Architecture of the Projet
+
+```
+.
+├── README.md
+├── assets
+│   └── images
+├── scripts
+│   └── HERE.js
+├── src
+│   ├── app
+│   │   ├── _layout.tsx
+│   │   ├── explore.tsx
+│   │   └── index.tsx
+│   ├── components
+│   ├── constants
+│   │   └── theme.ts
+│   ├── global.css
+│   └── hooks
+│       ├── use-color-scheme.ts
+│       ├── use-color-scheme.web.ts
+│       └── use-theme.ts
+├── app.json
+├── package-lock.json
+├── package.json
+└── tsconfig.json
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+<br>
 
-### Other setup steps
+Do not touch to `global.css`, `/hooks`, `/constants`<br>
+Do not touch to `app.json`, `package-lock.json`, `package.json`
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Do not rename the folder, there name are absolute in this specific format.
 
-## Learn more
+> **IMPORTANT :**<br>
+> Please do not try to modify `/components`. This folder contains basics components of the native react app. They will be very useful.
 
-To learn more about developing your project with Expo, look at the following resources:
+<br>
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Quick Reminer :
 
-## Join the community
+| Extension | Description               |
+| --------- | ------------------------- |
+| `.ts`     | TypeScript file           |
+| `.tsx`    | React / React Native file |
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+A file starting with a `_` as `_layout.tsx`, is a specific system file.
