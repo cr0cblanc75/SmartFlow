@@ -70,7 +70,7 @@ Do not rename the folder, there name are absolute in this specific format.
 > **IMPORTANT :**<br>
 > Please do not try to modify `/components`. This folder contains basics components of the native react app. They will be very useful.
 
-<br>t
+<br>
 
 ### Quick Reminer :
 
