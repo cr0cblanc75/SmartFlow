@@ -1,0 +1,18 @@
+{
+  "nodes": [
+    { "id": "A", "name": "Départ", "lat": 48.8566, "lng": 2.3522 },
+    { "id": "B", "name": "Carrefour 1", "lat": 48.8599, "lng": 2.3514 },
+    { "id": "C", "name": "Station", "lat": 48.8631, "lng": 2.3547 },
+    { "id": "D", "name": "Parc", "lat": 48.8661, "lng": 2.3521 },
+    { "id": "E", "name": "Destination", "lat": 48.8704, "lng": 2.3568 }
+  ],
+  "edges": [
+    { "from": "A", "to": "B", "distance": 0.5, "weight": 1 },
+    { "from": "A", "to": "C", "distance": 1.2, "weight": 2 },
+    { "from": "B", "to": "C", "distance": 0.8, "weight": 1 },
+    { "from": "B", "to": "D", "distance": 1.0, "weight": 2 },
+    { "from": "C", "to": "D", "distance": 0.7, "weight": 1 },
+    { "from": "C", "to": "E", "distance": 1.5, "weight": 1 },
+    { "from": "D", "to": "E", "distance": 0.9, "weight": 1 }
+  ]
+}

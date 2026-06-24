@@ -10,6 +10,7 @@ import { Collapsible } from '@/components/ui/collapsible';
 import { WebBadge } from '@/components/web-badge';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { usePathfinding } from '@/hooks/use-pathfinding';
 
 export default function TabTwoScreen() {
   const safeAreaInsets = useSafeAreaInsets();
@@ -18,6 +19,7 @@ export default function TabTwoScreen() {
     bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
   };
   const theme = useTheme();
+  const { path, stats, loading } = usePathfinding();
 
   const contentPlatformStyle = Platform.select({
     android: {
@@ -39,85 +41,85 @@ export default function TabTwoScreen() {
       contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
       <ThemedView style={styles.container}>
         <ThemedView style={styles.titleContainer}>
-          <ThemedText type="subtitle">Explore</ThemedText>
+          <ThemedText type="subtitle">SmartFlow - Pathfinding</ThemedText>
           <ThemedText style={styles.centerText} themeColor="textSecondary">
-            This starter app includes example{'\n'}code to help you get started.
+            Calcul d'itinéraire optimal avec algorithme Dijkstra
           </ThemedText>
-
-          <ExternalLink href="https://docs.expo.dev" asChild>
-            <Pressable style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView type="backgroundElement" style={styles.linkButton}>
-                <ThemedText type="link">Expo documentation</ThemedText>
-                <SymbolView
-                  tintColor={theme.text}
-                  name={{ ios: 'arrow.up.right.square', android: 'link', web: 'link' }}
-                  size={12}
-                />
-              </ThemedView>
-            </Pressable>
-          </ExternalLink>
         </ThemedView>
 
         <ThemedView style={styles.sectionsWrapper}>
-          <Collapsible title="File-based routing">
-            <ThemedText type="small">
-              This app has two screens: <ThemedText type="code">src/app/index.tsx</ThemedText> and{' '}
-              <ThemedText type="code">src/app/explore.tsx</ThemedText>
-            </ThemedText>
-            <ThemedText type="small">
-              The layout file in <ThemedText type="code">src/app/_layout.tsx</ThemedText> sets up
-              the tab navigator.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/router/introduction">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+          {loading ? (
+            <ThemedText>Chargement...</ThemedText>
+          ) : (
+            <>
+              {/* Statistiques du réseau */}
+              <Collapsible title="📊 Statistiques du réseau">
+                {stats && (
+                  <ThemedView type="backgroundElement" style={styles.statsContainer}>
+                    <ThemedText type="small">
+                      <ThemedText type="smallBold">Nœuds:</ThemedText> {stats.totalNodes}
+                    </ThemedText>
+                    <ThemedText type="small">
+                      <ThemedText type="smallBold">Arêtes:</ThemedText> {stats.totalEdges}
+                    </ThemedText>
+                    <ThemedText type="small">
+                      <ThemedText type="smallBold">Distance moyenne:</ThemedText>{' '}
+                      {stats.averageEdgeDistance.toFixed(2)} km
+                    </ThemedText>
+                    <ThemedText type="small">
+                      <ThemedText type="smallBold">Distance max:</ThemedText>{' '}
+                      {stats.maxEdgeDistance.toFixed(2)} km
+                    </ThemedText>
+                  </ThemedView>
+                )}
+              </Collapsible>
 
-          <Collapsible title="Android, iOS, and web support">
-            <ThemedView type="backgroundElement" style={styles.collapsibleContent}>
-              <ThemedText type="small">
-                You can open this project on Android, iOS, and the web. To open the web version,
-                press <ThemedText type="smallBold">w</ThemedText> in the terminal running this
-                project.
-              </ThemedText>
-              <Image
-                source={require('@/assets/images/tutorial-web.png')}
-                style={styles.imageTutorial}
-              />
-            </ThemedView>
-          </Collapsible>
+              {/* Chemin optimal */}
+              <Collapsible title="🗺️ Itinéraire optimal (A → E)">
+                {path && (
+                  <ThemedView type="backgroundElement" style={styles.pathContainer}>
+                    <ThemedText type="smallBold">Chemin:</ThemedText>
+                    <ThemedText type="small" style={styles.pathText}>
+                      {path.nodeNames.join(' → ')}
+                    </ThemedText>
 
-          <Collapsible title="Images">
-            <ThemedText type="small">
-              For static images, you can use the <ThemedText type="code">@2x</ThemedText> and{' '}
-              <ThemedText type="code">@3x</ThemedText> suffixes to provide files for different
-              screen densities.
-            </ThemedText>
-            <Image source={require('@/assets/images/react-logo.png')} style={styles.imageReact} />
-            <ExternalLink href="https://reactnative.dev/docs/images">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+                    <ThemedText type="smallBold" style={styles.marginTop}>
+                      Distance totale: {path.totalDistance.toFixed(2)} km
+                    </ThemedText>
 
-          <Collapsible title="Light and dark mode components">
-            <ThemedText type="small">
-              This template has light and dark mode support. The{' '}
-              <ThemedText type="code">useColorScheme()</ThemedText> hook lets you inspect what the
-              user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+                    <ThemedText type="small" style={styles.marginTop}>
+                      Étapes:
+                    </ThemedText>
+                    {path.path.map((nodeId, index) => (
+                      <ThemedText key={nodeId} type="small" style={styles.stepText}>
+                        {index + 1}. {nodeId}
+                      </ThemedText>
+                    ))}
+                  </ThemedView>
+                )}
+              </Collapsible>
 
-          <Collapsible title="Animations">
-            <ThemedText type="small">
-              This template includes an example of an animated component. The{' '}
-              <ThemedText type="code">src/components/ui/collapsible.tsx</ThemedText> component uses
-              the powerful <ThemedText type="code">react-native-reanimated</ThemedText> library to
-              animate opening this hint.
-            </ThemedText>
-          </Collapsible>
+              {/* Documentation */}
+              <Collapsible title="📚 À propos">
+                <ThemedText type="small">
+                  Cette démo utilise l'algorithme <ThemedText type="code">Dijkstra</ThemedText> pour
+                  trouver le chemin le plus court entre deux points.
+                </ThemedText>
+                <ThemedText type="small" style={styles.marginTop}>
+                  <ThemedText type="smallBold">Fichier de données:</ThemedText>{' '}
+                  <ThemedText type="code">src/data/edges.json</ThemedText>
+                </ThemedText>
+                <ThemedText type="small" style={styles.marginTop}>
+                  <ThemedText type="smallBold">Algorithme:</ThemedText>{' '}
+                  <ThemedText type="code">src/utils/pathfinding.ts</ThemedText>
+                </ThemedText>
+                <ThemedText type="small" style={styles.marginTop}>
+                  <ThemedText type="smallBold">Hook personnalisé:</ThemedText>{' '}
+                  <ThemedText type="code">src/hooks/use-pathfinding.ts</ThemedText>
+                </ThemedText>
+              </Collapsible>
+            </>
+          )}
         </ThemedView>
         {Platform.OS === 'web' && <WebBadge />}
       </ThemedView>
@@ -176,5 +178,24 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     alignSelf: 'center',
+  },
+  statsContainer: {
+    padding: Spacing.three,
+    gap: Spacing.two,
+  },
+  pathContainer: {
+    padding: Spacing.three,
+    gap: Spacing.two,
+  },
+  pathText: {
+    fontWeight: 'bold',
+    marginTop: Spacing.one,
+  },
+  marginTop: {
+    marginTop: Spacing.two,
+  },
+  stepText: {
+    marginLeft: Spacing.two,
+    marginTop: Spacing.one,
   },
 });
