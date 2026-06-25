@@ -16,11 +16,13 @@ export const Colors = {
         textSecondary: "#60646C",
 
         MainBackground: "#F9FFF7",
+        MainBackground100: "#E8F7E3",
 
         ButtonBackground: "#86D74F",
 
         MainTextWhite: "#FFFFFF",
         MainTextBlack: "#000000",
+        TextBlackOpa60: "#00000099",
     },
     dark: {
         text: "#ffffff",
@@ -30,11 +32,13 @@ export const Colors = {
         textSecondary: "#B0B4BA",
 
         MainBackground: "#23460A",
+        MainBackground100: "#3C4D36",
 
         ButtonBackground: "#59982E",
 
         MainTextWhite: "#00000000",
         MainTextBlack: "#FFFFFF",
+        TextBlackOpa60: "#FFFFFF99",
     },
 } as const;
 
@@ -75,14 +79,12 @@ export const Spacing = {
     six: 64,
 } as const;
 
-
 export const FontWeight = {
     Regular: 400,
     Medium: 500,
     SemiBold: 600,
     Bold: 700,
 } as const;
-
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;

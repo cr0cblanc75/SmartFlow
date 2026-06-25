@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { Image } from "expo-image";
+import ImageGroup from "@/assets/Image_Group.svg";
 import { Platform, ScrollView, StyleSheet, TextInput, View, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -9,14 +11,16 @@ import { useTheme } from "@/hooks/use-theme";
 import { TouchableOpacity } from "react-native";
 
 export default function TabTwoScreen() {
-    const [text, setText] = useState("");
+    const [ID, setID] = useState("");
+    const [mdp, setMdp] = useState("");
+    const theme = useTheme();
 
+    // Récupération des insets de sécurité pour gérer les marges et le padding -> (doit être sur chaque page)
     const safeAreaInsets = useSafeAreaInsets();
     const insets = {
         ...safeAreaInsets,
         bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
     };
-    const theme = useTheme();
 
     const contentPlatformStyle = Platform.select({
         android: {
@@ -32,35 +36,56 @@ export default function TabTwoScreen() {
     });
 
     return (
-        <ScrollView style={[styles.scrollView, { backgroundColor: theme.MainBackground }]} contentInset={insets} contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
-            <ThemedText type="title" style={styles.centerText}>
-                Welcome to SmartFlow
-            </ThemedText>
-            <ThemedText type="subtitle" style={styles.centerText}>
-                Please log in.
-            </ThemedText>
-
-            <View style={styles.container}>
-                <Text style={styles.label}>Identifiant :</Text>
-
-                <TextInput
-                    style={styles.input}
-                    placeholder="Tapez quelque chose ici..."
-                    placeholderTextColor="#888"
-                    value={text} // 1. Affiche ce qui est dans la mémoire
-                    onChangeText={(val) => setText(val)} // 2. Met à jour la mémoire à chaque lettre
-                />
-
-                {/* Optionnel : On affiche en temps réel ce qui est écrit en dessous */}
-                <Text style={styles.result}>Vous écrivez : {text}</Text>
+        <View style={{ flex: 1 }}>
+            <View style={[StyleSheet.absoluteFill, { zIndex: 1 }]}>
+                <Image source={require("@/assets/images/deco-shapes.png")} style={{ width: 235, height: 173, position: "absolute", top: -40, left: -80 }} />
+                <Image source={require("@/assets/images/deco-shapes.png")} style={{ width: 235, height: 173, position: "absolute", bottom: -50, right: -80 }} />
             </View>
 
-            <View>
-                <TouchableOpacity style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => console.log("Bouton pressé")}>
-                    <ThemedText style={[styles.buttonText, { color: theme.MainTextWhite }]}>Login</ThemedText>
-                </TouchableOpacity>
-            </View>
-        </ScrollView>
+            <ScrollView style={[styles.scrollView, { backgroundColor: theme.MainBackground }]} contentInset={insets} contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
+                <View style={[styles.viewWelcomeFrame, { marginTop: Platform.OS === "web" ? 0 : 80 }]}>
+                    <View style={{ width: "auto" }}>
+                        <ThemedText style={styles.subtitle}>Bienvenue sur</ThemedText>
+                        <ThemedText style={styles.title}>SmartFlow</ThemedText>
+                    </View>
+                    <View style={{ display: "flex", flexDirection: "column" }}>
+                        <ThemedText style={[styles.textIncipit, { color: theme.TextBlackOpa60 }]}>Heureux de vous revoir !</ThemedText>
+                        <ThemedText style={[styles.textIncipit, { color: theme.TextBlackOpa60 }]}>Identifiez-vous.</ThemedText>
+                    </View>
+                </View>
+
+                <View style={{ alignItems: "center" }}>
+                    <ImageGroup width={"100%"} height={245} preserveAspectRatio="xMidYMid meet" />
+                </View>
+
+                <View style={styles.formContainer}>
+                    <View style={styles.inputWrapper}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Identifiant..."
+                            placeholderTextColor={styles.placeholder.color}
+                            value={ID} // 1. Affiche ce qui est dans la mémoire
+                            onChangeText={(val) => setID(val)} // 2. Met à jour la mémoire à chaque lettre
+                        />
+                    </View>
+
+                    <View style={styles.inputWrapper}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Mot de passe..."
+                            placeholderTextColor={styles.placeholder.color}
+                            value={mdp} // 1. Affiche ce qui est dans la mémoire
+                            onChangeText={(val) => setMdp(val)} // 2. Met à jour la mémoire à chaque lettre
+                        />
+                    </View>
+                </View>
+                <View>
+                    <TouchableOpacity style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => console.log("Bouton pressé")}>
+                        <ThemedText style={[styles.buttonText, { color: theme.MainTextWhite }]}>Login</ThemedText>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+        </View>
     );
 }
 
@@ -76,23 +101,40 @@ const styles = StyleSheet.create({
         maxWidth: MaxContentWidth,
         flexGrow: 1,
     },
-    titleContainer: {
-        gap: Spacing.three,
+
+    // ------------------------- Welcome Frame -------------------------
+    viewWelcomeFrame: {
+        margin: "auto",
+        display: "flex",
+        flexDirection: "column",
         alignItems: "center",
-        paddingHorizontal: Spacing.four,
-        paddingVertical: Spacing.six,
+        justifyContent: "center",
+        gap: 20,
     },
-    centerText: {
+    subtitle: {
+        textAlign: "right",
+        fontSize: 16,
+        fontWeight: FontWeight.SemiBold,
+    },
+    title: {
         textAlign: "center",
+        fontSize: 48,
+        fontWeight: FontWeight.Bold,
+        lineHeight: 34,
+    },
+    textIncipit: {
+        textAlign: "center",
+        fontSize: 15,
+        fontWeight: FontWeight.Medium,
     },
 
-    // Styles for the login button
+    // ------------------------- Styles for the login button -------------------------
     button: {
-        width: "100%",
+        width: "90%",
 
         display: "flex",
         justifyContent: "center",
-        alignItems: "center",
+        alignSelf: "center",
 
         paddingVertical: Spacing.three,
         paddingHorizontal: Spacing.five,
@@ -104,26 +146,38 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
 
-    // Styles for the label of the TextInput
+    // ------------------------- Styles for the label of the TextInput -------------------------
+    formContainer: {
+        alignSelf: "center",
+        width: "90%",
+        padding: 16,
+        borderRadius: 12,
+    },
+    inputWrapper: {
+        marginBottom: 20,
+    },
+
     label: {
         fontSize: 16,
         marginBottom: 8,
-        fontWeight: "600",
+        fontWeight: FontWeight.SemiBold,
     },
-    // Je vais modifier tkt
     input: {
-        height: 50, // Hauteur de la case
-        borderColor: "#ccc", // Couleur de la bordure
-        borderWidth: 1, // Épaisseur de la bordure
-        borderRadius: 8, // Coins arrondis
-        paddingHorizontal: 15, // Espace intérieur pour que le texte ne colle pas au bord
+        height: 50,
         fontSize: 16,
-        backgroundColor: "#fff", // Fond blanc pour la case
-        color: "#000", // Couleur du texte écrit
+        borderColor: "#000",
+        borderWidth: 1,
+        borderRadius: 27,
+        paddingHorizontal: 10,
+        backgroundColor: "#E8F7E3",
+        color: "#000",
     },
-    result: {
-        marginTop: 15,
+    placeholder: {
+        color: "#000",
+        fontSize: 14,
         fontStyle: "italic",
-        color: "#555",
     },
 });
+
+//                 <Image style={{ width: 235, height: 173, position: "absolute", left: -80, top: -40 }} contentFit="contain" />
+//                 <Image source={require("@/assets/images/deco-shapes.png")} style={{ width: 235, height: 173, position: "absolute", left: 230, top: 710 }} contentFit="contain" />
