@@ -23,6 +23,7 @@ export const Colors = {
         MainTextWhite: "#FFFFFF",
         MainTextBlack: "#000000",
         TextBlackOpa60: "#00000099",
+        HyperText: "#00E0FF",
 
         LogoSplashPhone: "#3F3F56",
     },
@@ -84,6 +85,7 @@ export const Spacing = {
 } as const;
 
 export const FontWeight = {
+    Light: 300,
     Regular: 400,
     Medium: 500,
     SemiBold: 600,

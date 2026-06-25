@@ -7,20 +7,22 @@ import { Platform, ScrollView, StyleSheet, TextInput, View, Text } from "react-n
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
-import { BottomTabInset, FontWeight, Spacing } from "@/constants/theme";
+import { FontWeight, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { Pressable } from "react-native";
+import { useRouter } from "expo-router";
 
 export default function TabTwoScreen() {
     const [ID, setID] = useState("");
     const [mdp, setMdp] = useState("");
     const theme = useTheme();
+    const router = useRouter();
 
     // Récupération des insets de sécurité pour gérer les marges et le padding -> (doit être sur chaque page)
     const safeAreaInsets = useSafeAreaInsets();
     const insets = {
         ...safeAreaInsets,
-        bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
+        bottom: safeAreaInsets.bottom + Spacing.one,
     };
 
     const contentPlatformStyle = Platform.select({
@@ -38,12 +40,12 @@ export default function TabTwoScreen() {
 
     return (
         <View style={{ flex: 1 }}>
-            <View style={[StyleSheet.absoluteFill, { zIndex: 1 }]} pointerEvents="none">
+            <View style={[StyleSheet.absoluteFill, { zIndex: 1, pointerEvents: "none" }]}>
                 <Image source={require("@/assets/images/deco-shapes.png")} style={{ width: 235, height: 173, position: "absolute", top: -40, left: -80 }} />
                 <Image source={require("@/assets/images/deco-shapes.png")} style={{ width: 235, height: 173, position: "absolute", bottom: -50, right: -80 }} />
             </View>
 
-            <ScrollView style={[styles.scrollView, { backgroundColor: theme.MainBackground }]} contentInset={insets} contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
+            <ScrollView style={[styles.scrollView, { backgroundColor: theme.MainBackground, flex: 1 }]} contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
                 <View style={[styles.viewWelcomeFrame, { marginTop: Platform.OS === "web" ? 0 : 80 }]}>
                     <View style={{ width: "auto" }}>
                         <ThemedText style={styles.subtitle}>Bienvenue sur</ThemedText>
@@ -80,16 +82,21 @@ export default function TabTwoScreen() {
                         />
                     </View>
                 </View>
-                <View>
+
+                <View style={[styles.formContainer, { paddingTop: 0, paddingBottom: 0 }]}>
                     <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => console.log(`\nID : ${ID}`, `\nMdp : ${mdp}`)}>
-                        <Text style={{ color: "white" }}>Login</Text>
                         <ThemedText style={[styles.buttonText, { color: theme.MainTextWhite }]}>Login</ThemedText>
                     </Pressable>
-                    <ThemedText style={[styles.registerText, { color: theme.MainTextBlack }]}>Vous n'avez pas de compte ?</ThemedText>
+                    <ThemedText style={[styles.registerText, { color: theme.MainTextBlack }]}>
+                        {"Vous n'avez pas de compte ? "}
+                        <ThemedText style={styles.hyperlink} onPress={() => router.push("/inscription")}>
+                            Inscrivez-vous
+                        </ThemedText>
+                    </ThemedText>
                 </View>
-
-                <ThemedText style={[styles.registerText, { color: theme.MainTextBlack }]}>@RuntimeTerror</ThemedText>
             </ScrollView>
+
+            <ThemedText style={[styles.signatureText, { color: theme.MainTextBlack, bottom: insets.bottom }]}>@RuntimeTerror</ThemedText>
         </View>
     );
 }
@@ -100,12 +107,11 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         flexDirection: "column",
-        justifyContent: "center",
+        paddingBottom: Spacing.five,
     },
 
     // ------------------------- Welcome Frame -------------------------
     viewWelcomeFrame: {
-        margin: "auto",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -131,7 +137,7 @@ const styles = StyleSheet.create({
 
     // ------------------------- Styles for the login button -------------------------
     button: {
-        width: "90%",
+        width: "100%",
         height: 40,
 
         display: "flex",
@@ -139,7 +145,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         alignSelf: "center",
 
-        paddingVertical: Spacing.three,
+        paddingVertical: Spacing.two,
         paddingHorizontal: Spacing.five,
 
         borderRadius: 12,
@@ -154,6 +160,7 @@ const styles = StyleSheet.create({
         alignSelf: "center",
         width: "90%",
         padding: 16,
+        paddingBottom: 6,
         borderRadius: 12,
     },
     inputWrapper: {
@@ -174,5 +181,25 @@ const styles = StyleSheet.create({
     // ------------------------- Styles for the register button -------------------------
     registerText: {
         fontWeight: FontWeight.Regular,
+        textAlign: "left",
+        fontSize: 14,
+    },
+    hyperlink: {
+        fontWeight: FontWeight.Regular,
+        fontSize: 14,
+        color: "#00E0FF",
+    },
+    signatureText: {
+        textAlign: "center",
+        position: "absolute",
+        // see bottom properties inside the react part
+        left: 0,
+        right: 0,
+
+        fontWeight: FontWeight.Light,
+        fontStyle: "italic",
+        fontSize: 12,
+        letterSpacing: 3,
+        zIndex: 999,
     },
 });
