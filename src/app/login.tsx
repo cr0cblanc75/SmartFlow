@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Image } from "expo-image";
 import ImageGroup from "@/assets/Image_Group.svg";
 
-import { Platform, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, TextInput, View, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
@@ -38,9 +38,9 @@ export default function TabTwoScreen() {
 
     return (
         <View style={{ flex: 1 }}>
-            <View style={[StyleSheet.absoluteFill, {zIndex: 1 }]} pointerEvents="none">
+            <View style={[StyleSheet.absoluteFill, { zIndex: 1 }]} pointerEvents="none">
                 <Image source={require("@/assets/images/deco-shapes.png")} style={{ width: 235, height: 173, position: "absolute", top: -40, left: -80 }} />
-                <Image source={require("@/assets/images/deco-shapes.png")} style={{ width: 235, height: 173, position: "absolute", bottom: -50, right: -80}} />
+                <Image source={require("@/assets/images/deco-shapes.png")} style={{ width: 235, height: 173, position: "absolute", bottom: -50, right: -80 }} />
             </View>
 
             <ScrollView style={[styles.scrollView, { backgroundColor: theme.MainBackground }]} contentInset={insets} contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
@@ -62,9 +62,9 @@ export default function TabTwoScreen() {
                 <View style={styles.formContainer}>
                     <View style={styles.inputWrapper}>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { backgroundColor: theme.MainBackground100, color: theme.text, borderColor: theme.text }]}
                             placeholder="Identifiant..."
-                            placeholderTextColor="#000000"
+                            placeholderTextColor={theme.TextBlackOpa60}
                             value={ID} // 1. Affiche ce qui est dans la mémoire
                             onChangeText={(val) => setID(val)} // 2. Met à jour la mémoire à chaque lettre
                         />
@@ -72,16 +72,17 @@ export default function TabTwoScreen() {
 
                     <View style={styles.inputWrapper}>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { backgroundColor: theme.MainBackground100, color: theme.text, borderColor: theme.text }]}
                             placeholder="Mot de passe..."
-                            placeholderTextColor="#000000"
+                            placeholderTextColor={theme.TextBlackOpa60}
                             value={mdp} // 1. Affiche ce qui est dans la mémoire
                             onChangeText={(val) => setMdp(val)} // 2. Met à jour la mémoire à chaque lettre
                         />
                     </View>
                 </View>
                 <View>
-                    <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => console.log("Bouton pressé")}>
+                    <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => console.log(`\nID : ${ID}`, `\nMdp : ${mdp}`)}>
+                        <Text style={{ color: "white" }}>Login</Text>
                         <ThemedText style={[styles.buttonText, { color: theme.MainTextWhite }]}>Login</ThemedText>
                     </Pressable>
                     <ThemedText style={[styles.registerText, { color: theme.MainTextBlack }]}>Vous n'avez pas de compte ?</ThemedText>
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         fontWeight: FontWeight.SemiBold,
-        fontSize: 14,
+        fontSize: 18,
     },
 
     // ------------------------- Styles for the label of the TextInput -------------------------
@@ -161,14 +162,11 @@ const styles = StyleSheet.create({
     input: {
         height: 40,
         fontSize: 13,
-        borderColor: "#000",
         borderWidth: 1,
         borderRadius: 27,
         paddingHorizontal: 10,
-        backgroundColor: "#E8F7E3",
     },
     placeholder: {
-        color: "#000",
         fontSize: 13,
         fontStyle: "italic",
     },
@@ -176,5 +174,5 @@ const styles = StyleSheet.create({
     // ------------------------- Styles for the register button -------------------------
     registerText: {
         fontWeight: FontWeight.Regular,
-    } /*styles.placeholder.color*/,
+    },
 });
