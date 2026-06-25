@@ -1,14 +1,15 @@
-import React, { useState } from "react";
+import { useState } from "react";
+
 import { Image } from "expo-image";
 import ImageGroup from "@/assets/Image_Group.svg";
-import { Platform, ScrollView, StyleSheet, TextInput, View, Text } from "react-native";
+
+import { Platform, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
-import { BottomTabInset, FontWeight, MaxContentWidth, Spacing } from "@/constants/theme";
+import { BottomTabInset, FontWeight, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-
-import { TouchableOpacity } from "react-native";
+import { Pressable } from "react-native";
 
 export default function TabTwoScreen() {
     const [ID, setID] = useState("");
@@ -37,9 +38,9 @@ export default function TabTwoScreen() {
 
     return (
         <View style={{ flex: 1 }}>
-            <View style={[StyleSheet.absoluteFill, { zIndex: 1 }]}>
+            <View style={[StyleSheet.absoluteFill, {zIndex: 1 }]} pointerEvents="none">
                 <Image source={require("@/assets/images/deco-shapes.png")} style={{ width: 235, height: 173, position: "absolute", top: -40, left: -80 }} />
-                <Image source={require("@/assets/images/deco-shapes.png")} style={{ width: 235, height: 173, position: "absolute", bottom: -50, right: -80 }} />
+                <Image source={require("@/assets/images/deco-shapes.png")} style={{ width: 235, height: 173, position: "absolute", bottom: -50, right: -80}} />
             </View>
 
             <ScrollView style={[styles.scrollView, { backgroundColor: theme.MainBackground }]} contentInset={insets} contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
@@ -55,7 +56,7 @@ export default function TabTwoScreen() {
                 </View>
 
                 <View style={{ alignItems: "center" }}>
-                    <ImageGroup width={"100%"} height={245} preserveAspectRatio="xMidYMid meet" />
+                    <ImageGroup width={"100%"} height={245} preserveAspectRatio="xMidYMid meet" color={theme.LogoSplashPhone} />
                 </View>
 
                 <View style={styles.formContainer}>
@@ -63,7 +64,7 @@ export default function TabTwoScreen() {
                         <TextInput
                             style={styles.input}
                             placeholder="Identifiant..."
-                            placeholderTextColor={styles.placeholder.color}
+                            placeholderTextColor="#000000"
                             value={ID} // 1. Affiche ce qui est dans la mémoire
                             onChangeText={(val) => setID(val)} // 2. Met à jour la mémoire à chaque lettre
                         />
@@ -73,17 +74,20 @@ export default function TabTwoScreen() {
                         <TextInput
                             style={styles.input}
                             placeholder="Mot de passe..."
-                            placeholderTextColor={styles.placeholder.color}
+                            placeholderTextColor="#000000"
                             value={mdp} // 1. Affiche ce qui est dans la mémoire
                             onChangeText={(val) => setMdp(val)} // 2. Met à jour la mémoire à chaque lettre
                         />
                     </View>
                 </View>
                 <View>
-                    <TouchableOpacity style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => console.log("Bouton pressé")}>
+                    <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => console.log("Bouton pressé")}>
                         <ThemedText style={[styles.buttonText, { color: theme.MainTextWhite }]}>Login</ThemedText>
-                    </TouchableOpacity>
+                    </Pressable>
+                    <ThemedText style={[styles.registerText, { color: theme.MainTextBlack }]}>Vous n'avez pas de compte ?</ThemedText>
                 </View>
+
+                <ThemedText style={[styles.registerText, { color: theme.MainTextBlack }]}>@RuntimeTerror</ThemedText>
             </ScrollView>
         </View>
     );
@@ -96,10 +100,6 @@ const styles = StyleSheet.create({
     contentContainer: {
         flexDirection: "column",
         justifyContent: "center",
-    },
-    container: {
-        maxWidth: MaxContentWidth,
-        flexGrow: 1,
     },
 
     // ------------------------- Welcome Frame -------------------------
@@ -131,9 +131,11 @@ const styles = StyleSheet.create({
     // ------------------------- Styles for the login button -------------------------
     button: {
         width: "90%",
+        height: 40,
 
         display: "flex",
         justifyContent: "center",
+        alignItems: "center",
         alignSelf: "center",
 
         paddingVertical: Spacing.three,
@@ -143,7 +145,7 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         fontWeight: FontWeight.SemiBold,
-        fontSize: 18,
+        fontSize: 14,
     },
 
     // ------------------------- Styles for the label of the TextInput -------------------------
@@ -156,28 +158,23 @@ const styles = StyleSheet.create({
     inputWrapper: {
         marginBottom: 20,
     },
-
-    label: {
-        fontSize: 16,
-        marginBottom: 8,
-        fontWeight: FontWeight.SemiBold,
-    },
     input: {
-        height: 50,
-        fontSize: 16,
+        height: 40,
+        fontSize: 13,
         borderColor: "#000",
         borderWidth: 1,
         borderRadius: 27,
         paddingHorizontal: 10,
         backgroundColor: "#E8F7E3",
-        color: "#000",
     },
     placeholder: {
         color: "#000",
-        fontSize: 14,
+        fontSize: 13,
         fontStyle: "italic",
     },
-});
 
-//                 <Image style={{ width: 235, height: 173, position: "absolute", left: -80, top: -40 }} contentFit="contain" />
-//                 <Image source={require("@/assets/images/deco-shapes.png")} style={{ width: 235, height: 173, position: "absolute", left: 230, top: 710 }} contentFit="contain" />
+    // ------------------------- Styles for the register button -------------------------
+    registerText: {
+        fontWeight: FontWeight.Regular,
+    } /*styles.placeholder.color*/,
+});

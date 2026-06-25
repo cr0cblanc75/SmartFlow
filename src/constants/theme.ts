@@ -23,6 +23,8 @@ export const Colors = {
         MainTextWhite: "#FFFFFF",
         MainTextBlack: "#000000",
         TextBlackOpa60: "#00000099",
+
+        LogoSplashPhone: "#3F3F56",
     },
     dark: {
         text: "#ffffff",
@@ -36,9 +38,11 @@ export const Colors = {
 
         ButtonBackground: "#59982E",
 
-        MainTextWhite: "#00000000",
+        MainTextWhite: "#000",
         MainTextBlack: "#FFFFFF",
         TextBlackOpa60: "#FFFFFF99",
+
+        LogoSplashPhone: "#686862",
     },
 } as const;
 
@@ -87,4 +91,3 @@ export const FontWeight = {
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const MaxContentWidth = 800;
