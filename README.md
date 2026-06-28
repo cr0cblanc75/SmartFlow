@@ -32,6 +32,7 @@ The app is dynamicaly update. You don't need to relaunch everytime the code with
 
 <br><br>
 
+
 ## 📁 Architecture of the Projet
 
 ```
@@ -80,3 +81,15 @@ Do not rename the folder, there name are absolute in this specific format.
 | `.tsx`    | React / React Native file |
 
 A file starting with a `_` as `_layout.tsx`, is a specific system file.
+
+
+## Backend additions (committed by Paul - 28/06/26)
+
+This project now includes backend graph utilities in `scripts/dijkistra.js` for the transport routing engine:
+
+- `findPathByIds(graph, fromId, toId, options)` : compute the shortest route between two station IDs using Dijkstra.
+- `isConnected(graph)` : check whether the network is globally connected.
+- `getConnectedComponents(graph)` : detect isolated sub-networks.
+- `buildNetworkTree(graph, rootId)` : build a BFS tree from a station, useful for network visualization.
+
+These tools prepare the backend for frontend integration and support the core transport use cases before implementing schedules and user interface features.

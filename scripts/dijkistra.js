@@ -93,7 +93,86 @@ function buildAdjacency(graph) {
   return adj;
 }
 
-// ─── Formatage duree ──────────────────────────────────────────────────────────
+function buildUndirectedAdjacency(graph) {
+  const adj = {};
+  for (const node of graph.nodes) adj[node.id] = new Set();
+  for (const edge of graph.edges) {
+    if (!adj[edge.from]) adj[edge.from] = new Set();
+    if (!adj[edge.to]) adj[edge.to] = new Set();
+    adj[edge.from].add(edge.to);
+    adj[edge.to].add(edge.from);
+  }
+  return adj;
+}
+
+function getConnectedComponents(graph) {
+  const adj = buildUndirectedAdjacency(graph);
+  const visited = new Set();
+  const components = [];
+
+  for (const node of graph.nodes) {
+    const id = node.id;
+    if (visited.has(id)) continue;
+
+    const component = [];
+    const queue = [id];
+    visited.add(id);
+
+    while (queue.length > 0) {
+      const current = queue.shift();
+      component.push(current);
+      for (const neighbor of adj[current]) {
+        if (!visited.has(neighbor)) {
+          visited.add(neighbor);
+          queue.push(neighbor);
+        }
+      }
+    }
+
+    components.push(component);
+  }
+
+  return components;
+}
+
+function isConnected(graph) {
+  return getConnectedComponents(graph).length === 1;
+}
+
+function buildNetworkTree(graph, rootId) {
+  const adj = buildUndirectedAdjacency(graph);
+  const visited = new Set([rootId]);
+  const queue = [rootId];
+  const tree = {};
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    tree[current] = [];
+
+    for (const neighbor of adj[current] || []) {
+      if (!visited.has(neighbor)) {
+        visited.add(neighbor);
+        queue.push(neighbor);
+        tree[current].push(neighbor);
+      }
+    }
+  }
+
+  return tree;
+}
+
+function findPathByIds(graph, fromId, toId, options = {}) {
+  const { wheelchair = false } = options;
+  const nodeMap = {};
+  for (const node of graph.nodes) nodeMap[node.id] = node;
+
+  if (!nodeMap[fromId]) throw new Error(`Aucun arret trouve pour l'ID de depart : "${fromId}"`);
+  if (!nodeMap[toId]) throw new Error(`Aucun arret trouve pour l'ID d'arrivee : "${toId}"`);
+
+  const adj = buildAdjacency(graph);
+  return dijkstraMultiSource(adj, nodeMap, [fromId], new Set([toId]), wheelchair);
+}
+
 function formatDuration(seconds) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -265,7 +344,16 @@ function findPathByName(graph, fromName, toName, options = {}) {
 }
 
 // ─── Exports ──────────────────────────────────────────────────────────────────
-module.exports = { findPathByName, buildAdjacency };
+module.exports = {
+  findPathByName,
+  findPathByIds,
+  findStopsByName,
+  buildAdjacency,
+  buildUndirectedAdjacency,
+  getConnectedComponents,
+  isConnected,
+  buildNetworkTree,
+};
 
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 if (require.main === module) {
