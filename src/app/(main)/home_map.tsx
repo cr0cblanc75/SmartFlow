@@ -146,7 +146,6 @@ const styles = StyleSheet.create({
     // ------------------------- Destination displayer -------------------------
     destinationDisplayer: {
         width: 300,
-        height: 85,
 
         display: "flex",
         flexDirection: "column",
@@ -156,21 +155,22 @@ const styles = StyleSheet.create({
         gap: 0,
 
         position: "absolute",
-        top: -40,
+        top: -50,
 
         zIndex: 9999,
 
-        // iOS shadow
-        shadowColor: "black",
+        borderRadius: 12,
+
+        shadowColor: "#000",
         shadowOffset: {
             width: 0,
             height: 2,
         },
-        shadowOpacity: 0.75,
+        shadowOpacity: 0.15,
         shadowRadius: 15,
 
         // Android shadow
-        elevation: 8,
+        elevation: 6,
     },
 
     upperframeDestinationDisplayer: {
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
         paddingLeft: Spacing.two,
         paddingRight: Spacing.two,
         paddingTop: Spacing.two,
-        paddingBottom: Spacing.one,
+        paddingBottom: Spacing.two,
     },
 
     downframeDestinationDisplayer: {
@@ -212,10 +212,11 @@ const styles = StyleSheet.create({
         paddingLeft: Spacing.two,
         paddingRight: Spacing.two,
         paddingTop: Spacing.two,
-        paddingBottom: Spacing.one,
+        paddingBottom: Spacing.two,
     },
 
     destinationText: {
         fontWeight: FontWeight.Bold,
+        fontSize: 16,
     },
 });

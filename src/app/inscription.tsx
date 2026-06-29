@@ -60,12 +60,12 @@ export default function HomeScreen() {
                     </View>
 
                     <View style={styles.formContainer}>
-                        <View style={{ display: "flex", flexDirection: "column" }}>
+                        <View style={styles.boxIncipit}>
                             <ThemedText style={[styles.textIncipitBold, { color: theme.TextBlackOpa60 }]}>Créer un compte.</ThemedText>
                             <ThemedText style={[styles.textIncipit, { color: theme.TextBlackOpa60 }]}>Rentrez vos informations ci-dessous pour créer un compte.</ThemedText>
                         </View>
 
-                        
+
                         <View style={styles.inputWrapper}>
                             <TextInput
                                 style={[styles.input, { backgroundColor: theme.MainBackground100, color: theme.text, borderColor: theme.text }]}
@@ -154,21 +154,26 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         gap: 20,
     },
+
     title: {
         textAlign: "center",
         fontSize: 48,
         fontWeight: FontWeight.Bold,
         lineHeight: 34,
     },
+
+    boxIncipit:{
+        flexDirection: "column", 
+        alignItems: "flex-start",
+    },
+
     textIncipitBold: {
-        textAlign: "center",
-        fontSize: 15,
+        fontSize: 17,
         fontWeight: FontWeight.Bold,
     },
 
     textIncipit: {
-        textAlign: "center",
-        fontSize: 15,
+        fontSize: 14.5,
         fontWeight: FontWeight.Medium,
     },
 
