@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
         textAlign: "center",
         fontSize: 48,
         fontWeight: FontWeight.Bold,
-        lineHeight: 34,
+        lineHeight: 38,
     },
     textIncipit: {
         textAlign: "center",

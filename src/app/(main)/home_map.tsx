@@ -61,10 +61,16 @@ export default function HomeScreen() {
                     </View>
 
                     {/* Bottom */}
-                    <View style={[styles.downframeDestinationDisplayer, { backgroundColor: theme.MainBackground100, borderBottomColor: theme.BackgroundAwardCards }]}>
+                    <View style={[styles.downframeDestinationDisplayer, { backgroundColor: theme.MainBackground100 }]}>
                         <View style={styles.downFrame}>
-                            <StarIcon height={25} preserveAspectRatio="xMidYMid meet" />
-                            <ThemedText style={[styles.destinationText, { color: theme.MainTextBlack }]}>Waypoints</ThemedText>
+                            <View style={styles.secondaryDownFrame}>
+                                <StarIcon height={25} preserveAspectRatio="xMidYMid meet" />
+                                <ThemedText style={[styles.destinationText, { color: theme.MainTextBlack }]}>Waypoints</ThemedText>
+                            </View>
+
+                            <View style={[styles.clockFrame, { borderLeftColor: theme.BackgroundAwardCards, borderColor: theme.BackgroundAwardCards }]}>
+                                <ClockButton height={25} preserveAspectRatio="xMidYMid meet" />
+                            </View>
                         </View>
                     </View>
                 </View>
@@ -161,6 +167,7 @@ const styles = StyleSheet.create({
 
         borderRadius: 12,
 
+        // iOS shadow
         shadowColor: "#000",
         shadowOffset: {
             width: 0,
@@ -172,6 +179,8 @@ const styles = StyleSheet.create({
         // Android shadow
         elevation: 6,
     },
+
+    // -------- Upper Layer --------
 
     upperframeDestinationDisplayer: {
         width: "100%",
@@ -189,11 +198,13 @@ const styles = StyleSheet.create({
         justifyContent: "flex-start",
         gap: 10,
 
-        paddingLeft: Spacing.two,
-        paddingRight: Spacing.two,
+        paddingLeft: Spacing.three,
+        paddingRight: Spacing.three,
         paddingTop: Spacing.two,
         paddingBottom: Spacing.two,
     },
+
+    // -------- Down Layer --------
 
     downframeDestinationDisplayer: {
         width: "100%",
@@ -206,17 +217,34 @@ const styles = StyleSheet.create({
         width: "100%",
         display: "flex",
         flexDirection: "row",
-        justifyContent: "flex-start",
+        justifyContent: "space-between",
         gap: 10,
 
-        paddingLeft: Spacing.two,
-        paddingRight: Spacing.two,
-        paddingTop: Spacing.two,
-        paddingBottom: Spacing.two,
+        alignItems: "center",
+    },
+
+    secondaryDownFrame: {
+        display: "flex",
+        flexDirection: "row",
+        gap: 10,
+
+        paddingLeft: Spacing.three,
+        paddingRight: Spacing.three,
     },
 
     destinationText: {
         fontWeight: FontWeight.Bold,
         fontSize: 16,
+    },
+
+    clockFrame: {
+        paddingLeft: Spacing.three,
+        paddingRight: Spacing.three,
+        paddingTop: Spacing.two,
+        paddingBottom: Spacing.two,
+
+        justifyContent: "center",
+
+        borderLeftWidth: 1,
     },
 });

@@ -50,7 +50,7 @@ export default function Map() {
                                 }).addTo(map);
 
                                 // DEFAULT MARKER
-                                L.marker([48.8566, 2.3522]).addTo(map).bindPopup("Paris").openPopup();
+                                L.marker([48.8566, 2.3522]).addTo(map).bindPopup("Test : Paris");
 
                                 // CLICK EVENT (safe version)
                                 map.on("click", function (e) {
