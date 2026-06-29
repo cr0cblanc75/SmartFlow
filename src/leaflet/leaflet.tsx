@@ -62,9 +62,44 @@ export default function Map() {
                         pane: "filteredTiles"
                     }).addTo(map);
 
-                    // MARKER TEST
-                    const marker = L.marker([48.8566, 2.3522], { icon: customIcon }).addTo(map);
-                    marker.bindPopup("Test : Paris");
+                    // MARKER LIST
+                    const waypoints = [
+                    { id: 1, lat: 48.788741, lng: 2.363725, label: "Efrei Paris" },
+                    { id: 2, lat: 48.846249, lng: 2.346409, label: "Le Panthéon" },
+                    { id: 3, lat: 48.845908, lng: 2.349079, label: "Le Bateau Ivre" },
+                    { id: 4, lat: 48.843507, lng: 2.359379, label: "Jardin des Plantes" },
+                    { id: 5, lat: 48.853227, lng: 2.350153, label: "Notre-Dame" },
+                    { id: 6, lat: 48.860706, lng: 2.337432, label: "Le Louvre" },
+                    { id: 9, lat: 48.862120, lng: 2.346668, label: "Les Halles - Chatelet" },
+                    { id: 10, lat: 48.87263, lng: 2.331246, label: "Parlais Garnier" },
+                    { id: 11, lat: 48.88687, lng: 2.338142, label: "Montmartre" },
+                    { id: 12, lat: 48.87334, lng: 2.295190, label: "Arc de Triomphe" },
+                    { id: 13, lat: 48.85546, lng: 2.311022, label: "Les Invalides" },
+                    { id: 14, lat: 48.84252, lng: 2.322411, label: "Montparnasse" },
+                    { id: 15, lat: 48.84682, lng: 2.337203, label: "Parc du Luxembourg" },
+                    { id: 16, lat: 48.86124, lng: 2.394740, label: "Cimetière Père Lachaise" },
+                    { id: 17, lat: 48.84839, lng: 2.395899, label: "Nation" },
+                    { id: 18, lat: 48.83364, lng: 2.375745, label: "Bibliothèque François-Mitterand" },
+                    { id: 19, lat: 48.83146, lng: 2.355532, label: "Place d'Italie" },
+                    { id: 20, lat: 48.82160, lng: 2.358573, label: "Maison Blanche" },
+                    { id: 21, lat: 48.89052, lng: 2.242103, label: "La Défense" },
+                    { id: 22, lat: 48.86762, lng: 2.363986, label: "République" },
+                    ];
+                    const markersLayer = L.layerGroup().addTo(map);
+
+                    function renderMarkers() {
+                    markersLayer.clearLayers();
+
+                    waypoints.forEach((wp) => {
+                        const marker = L.marker([wp.lat, wp.lng], { icon: customIcon })
+                            .bindPopup(wp.label);
+
+                        markersLayer.addLayer(marker);
+                        });
+                    }
+                    renderMarkers();
+
+                    
 
                     </script>
 
