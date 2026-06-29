@@ -8,6 +8,9 @@
 
 - [ ]
 
+## inscription_validated.tsx
+
+- [ ] Aligner au centre la box de text + bouton "Continuer" en bas.
 ## home_map.tsx
 
-- [ ] Insets top (pour affichage bouttons +/- map)
+- [x] Insets top (pour affichage bouttons +/- map)

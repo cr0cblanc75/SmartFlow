@@ -12,6 +12,7 @@ export default function Layout() {
             <Stack screenOptions={{ headerShown: false, animation: "none" }}>
                 <Stack.Screen name="index" />
                 <Stack.Screen name="inscription" />
+                <Stack.Screen name="inscription_validated" />
                 <Stack.Screen name="(main)/home_map" />
             </Stack>
         </ThemeProvider>

@@ -118,7 +118,7 @@ export default function HomeScreen() {
                     </View>
 
                     <View style={styles.formContainer}>
-                        <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => router.push("/(main)/home_map")}>
+                        <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => router.push("/inscription_validated")}>
                             <ThemedText style={[styles.buttonText, { color: theme.MainTextWhite }]}>S'inscrire</ThemedText>
                         </Pressable>
                     </View>
