@@ -68,8 +68,8 @@ export default function HomeScreen() {
                                 <ThemedText style={[styles.destinationText, { color: theme.MainTextBlack }]}>Waypoints</ThemedText>
                             </View>
 
-                            <View style={[styles.clockFrame, { borderLeftColor: theme.BackgroundAwardCards, borderColor: theme.BackgroundAwardCards }]}>
-                                <ClockButton height={25} preserveAspectRatio="xMidYMid meet" />
+                            <View style={[styles.clockFrame, { borderLeftColor: theme.BackgroundAwardCards}]}>
+                                <ClockButton height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
                             </View>
                         </View>
                     </View>

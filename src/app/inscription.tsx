@@ -112,7 +112,9 @@ export default function HomeScreen() {
                         <Pressable style={[styles.checkboxBase, { borderColor: isChecked ? "#86D74F" : "#CCCCCC" }, isChecked && { backgroundColor: "#86D74F" }]} onPress={() => setIsChecked(!isChecked)}>
                             {isChecked && <View style={styles.checkboxCheckedInner} />}
                         </Pressable>
-                        <ThemedText style={styles.textCheckBox}>J'accepte les termes et conditions</ThemedText>
+                        <Pressable style={styles.buttonCheckbox} onPress={() => setIsChecked(!isChecked)}>
+                            <ThemedText style={styles.textCheckBox}>J'accepte les termes et conditions</ThemedText>
+                        </Pressable>
                     </View>
 
                     <View style={styles.formContainer}>
@@ -272,8 +274,8 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "center",
         padding: 0,
-        marginTop: 5,
-        marginBottom: 30,
+        marginTop: 25,
+        marginBottom: 45,
     },
     checkboxBase: {
         width: 24,
@@ -282,7 +284,6 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         justifyContent: "center",
         alignItems: "center",
-        marginRight: 9,
     },
     checkboxCheckedInner: {
         width: 12,
@@ -290,7 +291,16 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         backgroundColor: "#FFFFFF",
     },
+    buttonCheckbox: {
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        alignSelf: "center",
 
+        paddingLeft: 10,
+
+        borderRadius: 12,
+    },
     textCheckBox: {
         fontWeight: FontWeight.Regular,
         fontSize: 15,
