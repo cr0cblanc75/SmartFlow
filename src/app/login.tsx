@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Image } from "expo-image";
 import ImageGroup from "@/assets/Image_Group.svg";
 
-import { Platform, ScrollView, StyleSheet, TextInput, View, Text } from "react-native";
+import { Platform, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
@@ -84,9 +84,10 @@ export default function TabTwoScreen() {
                 </View>
 
                 <View style={[styles.formContainer, { paddingTop: 0, paddingBottom: 0 }]}>
-                    <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => console.log(`\nID : ${ID}`, `\nMdp : ${mdp}`)}>
+                    <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => router.push("/(main)/home_map")}>
                         <ThemedText style={[styles.buttonText, { color: theme.MainTextWhite }]}>Login</ThemedText>
                     </Pressable>
+
                     <ThemedText style={[styles.registerText, { color: theme.MainTextBlack }]}>
                         {"Vous n'avez pas de compte ? "}
                         <ThemedText style={styles.hyperlink} onPress={() => router.push("/inscription")}>
