@@ -17,8 +17,11 @@ export const Colors = {
 
         MainBackground: "#F9FFF7",
         MainBackground100: "#E8F7E3",
+        MainBackground200: "#6EB955",
 
         ButtonBackground: "#86D74F",
+
+        BackgroundAwardCards: "#6C6C6C",
 
         MainTextWhite: "#FFFFFF",
         MainTextBlack: "#000000",
@@ -36,8 +39,11 @@ export const Colors = {
 
         MainBackground: "#23460A",
         MainBackground100: "#3C4D36",
+        MainBackground200: "#659E51",
 
         ButtonBackground: "#59982E",
+
+        BackgroundAwardCards: "#6C6C6C",
 
         MainTextWhite: "#000",
         MainTextBlack: "#FFFFFF",

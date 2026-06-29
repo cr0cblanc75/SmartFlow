@@ -190,6 +190,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#00E0FF",
     },
+    
     signatureText: {
         textAlign: "center",
         position: "absolute",
