@@ -47,7 +47,7 @@ export default function HomeScreen() {
             return;
         }
         setErrorMessage("");
-        router.push("/(main)/home_map");
+        router.push("/inscription_validated");
     };
 
     const safeAreaInsets = useSafeAreaInsets();
@@ -143,9 +143,7 @@ export default function HomeScreen() {
                             />
                         </View>
 
-                        {errorMessage ? (
-                            <ThemedText style={styles.errorText}>{errorMessage}</ThemedText>
-                        ) : null}
+                        {errorMessage ? <ThemedText style={styles.errorText}>{errorMessage}</ThemedText> : null}
 
                         {/*Acceptez les termes et conditions*/}
                         <View style={styles.containerCheckbox}>
@@ -157,7 +155,6 @@ export default function HomeScreen() {
                             </Pressable>
                         </View>
 
-                    
                         <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={handleLogin}>
                             <ThemedText style={[styles.buttonText, { color: theme.MainTextWhite }]}>S'inscrire</ThemedText>
                         </Pressable>
@@ -273,6 +270,8 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
     errorText: {
+        position: "absolute",
+        top: "100%",
         color: "#FF3B30", // Un beau rouge iOS / Android standard pour les erreurs
         fontSize: 14,
         fontWeight: "600",
@@ -322,9 +321,9 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "center",
         padding: 0,
-        marginTop: 25,
-        marginBottom: 45,
+        marginVertical: 25,
     },
+
     checkboxBase: {
         width: 24,
         height: 24,
@@ -333,12 +332,14 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
     },
+
     checkboxCheckedInner: {
         width: 12,
         height: 12,
         borderRadius: 6,
         backgroundColor: "#FFFFFF",
     },
+
     buttonCheckbox: {
         display: "flex",
         justifyContent: "center",
@@ -349,6 +350,7 @@ const styles = StyleSheet.create({
 
         borderRadius: 12,
     },
+
     textCheckBox: {
         fontWeight: FontWeight.Regular,
         fontSize: 15,
