@@ -20,7 +20,6 @@ import Map from "@/leaflet/leaflet";
 import { ThemedText } from "@/components/themed-text";
 
 export default function HomeScreen() {
-    const [Destination, setDestination] = useState("");
     const theme = useTheme();
     const router = useRouter();
 
@@ -59,14 +58,7 @@ export default function HomeScreen() {
                     <View style={[styles.upperframeDestinationDisplayer, { backgroundColor: theme.MainBackground100, borderBottomColor: theme.BackgroundAwardCards }]}>
                         <View style={styles.upperFrame}>
                             <LogoNavbar height={25} preserveAspectRatio="xMidYMid meet" />
-                            <TextInput
-                                style={[styles.destinationText, { color: theme.MainTextBlack }]}
-                                placeholder="Prochaine destination ?"
-                                placeholderTextColor={theme.TextBlackOpa60}
-                                value={Destination} // 1. Affiche ce qui est dans la mémoire
-                                onChangeText={(val) => setDestination(val)} // 2. Met à jour la mémoire à chaque lettre
-                            />
-                            {/*<ThemedText style={[styles.destinationText, { color: theme.MainTextBlack }]}>Prochaine destination ?</ThemedText>*/}
+                            <ThemedText style={[styles.destinationText, { color: theme.MainTextBlack }]}>Prochaine destination ?</ThemedText>
                         </View>
                     </View>
 
@@ -246,10 +238,8 @@ const styles = StyleSheet.create({
     },
 
     destinationText: {
-        flex: 1,
         fontWeight: FontWeight.Bold,
         fontSize: 16,
-        margin: 0,
         paddingVertical: 0,
     },
 
