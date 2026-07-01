@@ -4,12 +4,19 @@
  * Combine graph.json (structure + poids) et timetable.json (horaires de depart)
  * Poids reel d'une arete = temps d'attente du prochain vehicule + poids graph.json
  *
+ * Recherche par nom : findStopsByName tolere les fautes de frappe (marge d'erreur,
+ * distance de Levenshtein) mais ne melange jamais les paliers de precision entre eux
+ * (exact > commence par > contient > approximatif), pour ne pas confondre deux arrets.
+ * Une fois un arret precis choisi (par ID), utiliser findPathTimedByIds /
+ * findPathTimedArrivalByIds pour router sans repasser par la recherche par nom.
+ *
  * Usage direct :
  *   node dijkstra_timed.js "Chatelet" "Nation" --time 08:30
  *   node dijkstra_timed.js "Chatelet" "Nation" --time 08:30 --wheelchair
+ *   node dijkstra_timed.js --fromId <id> --toId <id> --time 08:30
  *
  * Usage en module :
- *   const { findPathTimed } = require('./dijkstra_timed');
+ *   const { findPathTimed, findPathTimedByIds, findStopsByName } = require('./dijkstra_timed');
  *   const result = findPathTimed(graph, timetable, "Chatelet", "Nation", { departureTime: "08:30" });
  */
 
@@ -66,14 +73,74 @@ function normalize(str) {
     .trim();
 }
 
+// ─── Distance de Levenshtein (tolerance aux fautes de frappe) ─────────────────
+function levenshteinDistance(a, b) {
+  if (a === b) return 0;
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+
+  let prev = new Array(n + 1);
+  let curr = new Array(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(
+        prev[j] + 1,     // suppression
+        curr[j - 1] + 1, // insertion
+        prev[j - 1] + cost, // substitution
+      );
+    }
+    [prev, curr] = [curr, prev];
+  }
+
+  return prev[n];
+}
+
+// Tolerance par defaut : proportionnelle a la longueur du nom recherche,
+// plafonnee pour ne jamais matcher n'importe quoi sur un nom court.
+function defaultFuzzyTolerance(query) {
+  return Math.max(1, Math.min(3, Math.floor(query.length * 0.3)));
+}
+
 // ─── Recherche arrets par nom ──────────────────────────────────────────────────
-function findStopsByName(nodes, name) {
+// Priorite : exact > commence par > contient > proche (fautes de frappe)
+// Chaque palier n'est utilise que si le precedent n'a rien donne, pour ne
+// jamais melanger un arret exact avec un arret trouve par approximation.
+function findStopsByName(nodes, name, options = {}) {
   const query = normalize(name);
+
   const exact = nodes.filter(n => normalize(n.name) === query);
   if (exact.length > 0) return exact;
+
   const startsWith = nodes.filter(n => normalize(n.name).startsWith(query));
   if (startsWith.length > 0) return startsWith;
-  return nodes.filter(n => normalize(n.name).includes(query));
+
+  const contains = nodes.filter(n => normalize(n.name).includes(query));
+  if (contains.length > 0) return contains;
+
+  return findStopsByFuzzyName(nodes, query, options.maxDistance);
+}
+
+// Dernier recours : tolere une marge d'erreur (fautes de frappe, lettres
+// manquantes/en trop). Ne garde que les arrets les plus proches de la
+// requete pour eviter de confondre deux stations differentes.
+function findStopsByFuzzyName(nodes, normalizedQuery, maxDistance) {
+  const tolerance = maxDistance ?? defaultFuzzyTolerance(normalizedQuery);
+  let bestDistance = Infinity;
+  const matches = [];
+
+  for (const node of nodes) {
+    const distance = levenshteinDistance(normalizedQuery, normalize(node.name));
+    if (distance > tolerance) continue;
+    if (distance < bestDistance) bestDistance = distance;
+    matches.push({ node, distance });
+  }
+
+  return matches.filter(m => m.distance === bestDistance).map(m => m.node);
 }
 
 // ─── HH:MM -> secondes ────────────────────────────────────────────────────────
@@ -124,6 +191,75 @@ function buildAdjacency(graph) {
     adj[edge.from].push(edge);
   }
   return adj;
+}
+
+// ─── Analyse du reseau (independant des horaires) ─────────────────────────────
+function buildUndirectedAdjacency(graph) {
+  const adj = {};
+  for (const node of graph.nodes) adj[node.id] = new Set();
+  for (const edge of graph.edges) {
+    if (!adj[edge.from]) adj[edge.from] = new Set();
+    if (!adj[edge.to]) adj[edge.to] = new Set();
+    adj[edge.from].add(edge.to);
+    adj[edge.to].add(edge.from);
+  }
+  return adj;
+}
+
+function getConnectedComponents(graph) {
+  const adj = buildUndirectedAdjacency(graph);
+  const visited = new Set();
+  const components = [];
+
+  for (const node of graph.nodes) {
+    const id = node.id;
+    if (visited.has(id)) continue;
+
+    const component = [];
+    const queue = [id];
+    visited.add(id);
+
+    while (queue.length > 0) {
+      const current = queue.shift();
+      component.push(current);
+      for (const neighbor of adj[current]) {
+        if (!visited.has(neighbor)) {
+          visited.add(neighbor);
+          queue.push(neighbor);
+        }
+      }
+    }
+
+    components.push(component);
+  }
+
+  return components;
+}
+
+function isConnected(graph) {
+  return getConnectedComponents(graph).length === 1;
+}
+
+function buildNetworkTree(graph, rootId) {
+  const adj = buildUndirectedAdjacency(graph);
+  const visited = new Set([rootId]);
+  const queue = [rootId];
+  const tree = {};
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    tree[current] = [];
+
+    for (const neighbor of adj[current] || []) {
+      if (!visited.has(neighbor)) {
+        visited.add(neighbor);
+        queue.push(neighbor);
+        tree[current].push(neighbor);
+      }
+    }
+  }
+
+  return tree;
 }
 
 // ─── Reconstruction des etapes ────────────────────────────────────────────────
@@ -310,6 +446,33 @@ function findPathTimed(graph, timetable, fromName, toName, options = {}) {
   return dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelchair);
 }
 
+// ─── findPathTimedByIds ────────────────────────────────────────────────────────
+// A utiliser une fois qu'un arret precis a ete choisi (ex: apres disambiguation
+// via findStopsByName) : on route uniquement sur les IDs fournis, sans repasser
+// par la recherche par nom, pour ne jamais confondre deux arrets differents.
+// fromId/toId acceptent un seul ID ou un tableau d'IDs (ex: plusieurs quais
+// d'une meme station deja identifiee).
+function findPathTimedByIds(graph, timetable, fromId, toId, options = {}) {
+  const { departureTime = "08:00", wheelchair = false } = options;
+
+  const nodeMap = {};
+  for (const node of graph.nodes) nodeMap[node.id] = node;
+
+  const fromIds = Array.isArray(fromId) ? fromId : [fromId];
+  const toIds   = Array.isArray(toId)   ? toId   : [toId];
+
+  for (const id of fromIds) {
+    if (!nodeMap[id]) throw new Error(`Aucun arret trouve pour l'ID de depart : "${id}"`);
+  }
+  for (const id of toIds) {
+    if (!nodeMap[id]) throw new Error(`Aucun arret trouve pour l'ID d'arrivee : "${id}"`);
+  }
+
+  const startSec = timeToSeconds(departureTime);
+  const adj      = buildAdjacency(graph);
+  return dijkstraTimed(adj, nodeMap, timetable, fromIds, new Set(toIds), startSec, wheelchair);
+}
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 // ─── Recherche binaire : dernier depart <= beforeSec ──────────────────────────
 function lastDeparture(departures, beforeSec) {
@@ -490,7 +653,42 @@ function findPathTimedArrival(graph, timetable, fromName, toName, options = {}) 
   return dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSec, wheelchair);
 }
 
-module.exports = { findPathTimed, findPathTimedArrival };
+// ─── findPathTimedArrivalByIds ─────────────────────────────────────────────────
+// Equivalent de findPathTimedArrival mais sur des IDs deja resolus, pour router
+// sans ambiguite une fois l'arret precis choisi.
+function findPathTimedArrivalByIds(graph, timetable, fromId, toId, options = {}) {
+  const { arrivalTime = "09:00", wheelchair = false } = options;
+
+  const nodeMap = {};
+  for (const node of graph.nodes) nodeMap[node.id] = node;
+
+  const fromIds = Array.isArray(fromId) ? fromId : [fromId];
+  const toIds   = Array.isArray(toId)   ? toId   : [toId];
+
+  for (const id of fromIds) {
+    if (!nodeMap[id]) throw new Error(`Aucun arret trouve pour l'ID de depart : "${id}"`);
+  }
+  for (const id of toIds) {
+    if (!nodeMap[id]) throw new Error(`Aucun arret trouve pour l'ID d'arrivee : "${id}"`);
+  }
+
+  const arrivalSec = timeToSeconds(arrivalTime);
+  const adj        = buildAdjacency(graph);
+  return dijkstraTimedReverse(adj, nodeMap, timetable, new Set(fromIds), toIds, arrivalSec, wheelchair);
+}
+
+module.exports = {
+  findPathTimed,
+  findPathTimedArrival,
+  findPathTimedByIds,
+  findPathTimedArrivalByIds,
+  findStopsByName,
+  buildAdjacency,
+  buildUndirectedAdjacency,
+  getConnectedComponents,
+  isConnected,
+  buildNetworkTree,
+};
 
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 if (require.main === module) {
@@ -500,10 +698,13 @@ if (require.main === module) {
   const wheelchair    = !!args.wheelchair;
   const departureTime = args.time    || null;
   const arrivalTime   = args.arrive  || null;
+  const fromId        = args.fromId  || null;
+  const toId          = args.toId    || null;
 
   if (!departureTime && !arrivalTime) {
     console.log('Usage : node dijkstra_timed.js "Depart" "Arrivee" --time HH:MM [--wheelchair]');
     console.log('        node dijkstra_timed.js "Depart" "Arrivee" --arrive HH:MM [--wheelchair]');
+    console.log('        node dijkstra_timed.js --fromId <id> --toId <id> --time HH:MM   (route sans ambiguite)');
     console.log('Ex    : node dijkstra_timed.js "Chatelet" "Nation" --time 08:30');
     console.log('Ex    : node dijkstra_timed.js "Chatelet" "Nation" --arrive 09:00');
     process.exit(0);
@@ -516,12 +717,21 @@ if (require.main === module) {
   const timetable = require("./timetable.json");
 
   console.log(`${graph.nodes.length} sommets | ${Object.keys(timetable).length} arrets avec horaires\n`);
-  console.log(`Recherche : "${fromName}" -> "${toName}" a ${departureTime}\n`);
 
   const start = Date.now();
   let result;
   try {
-    if (arrivalTime) {
+    if (fromId && toId) {
+      // Arrets deja identifies (ex: apres disambiguation via findStopsByName) :
+      // on route directement sur les IDs, sans repasser par la recherche par nom.
+      if (arrivalTime) {
+        console.log(`Recherche : "${fromId}" -> "${toId}" arriver avant ${arrivalTime}\n`);
+        result = findPathTimedArrivalByIds(graph, timetable, fromId, toId, { arrivalTime, wheelchair });
+      } else {
+        console.log(`Recherche : "${fromId}" -> "${toId}" a ${departureTime}\n`);
+        result = findPathTimedByIds(graph, timetable, fromId, toId, { departureTime, wheelchair });
+      }
+    } else if (arrivalTime) {
       console.log(`Recherche : "${fromName}" -> "${toName}" arriver avant ${arrivalTime}\n`);
       result = findPathTimedArrival(graph, timetable, fromName, toName, { arrivalTime, wheelchair });
     } else {
