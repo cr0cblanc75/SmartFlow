@@ -65,7 +65,7 @@ export function AnimatedScreen({ children, duration = 300, type = "fade" }: Anim
     }
 
     return (
-        <Animated.View entering={entering} exiting={exiting} style={{ flex: 1 }}>
+        <Animated.View entering={entering} exiting={exiting} style={{ flex: 1 }} pointerEvents="box-none">
             {children}
         </Animated.View>
     );

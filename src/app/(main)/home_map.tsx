@@ -56,20 +56,26 @@ export default function HomeScreen() {
                 <View style={styles.destinationDisplayer}>
                     {/* Upper */}
                     <View style={[styles.upperframeDestinationDisplayer, { backgroundColor: theme.MainBackground100, borderBottomColor: theme.BackgroundAwardCards }]}>
-                        <View style={styles.upperFrame}>
-                            <LogoNavbar height={25} preserveAspectRatio="xMidYMid meet" />
-                            <ThemedText style={[styles.destinationText, { color: theme.MainTextBlack }]}>Prochaine destination ?</ThemedText>
-                        </View>
+                        <Pressable onPress={() => router.push("/(main)/waypoints")}>
+                            <View style={styles.upperFrame}>
+                                <LogoNavbar height={25} preserveAspectRatio="xMidYMid meet" />
+                                <ThemedText style={[styles.destinationText, { color: theme.MainTextBlack }]}>Prochaine destination ?</ThemedText>
+                            </View>
+                        </Pressable>
                     </View>
 
                     {/* Bottom */}
                     <View style={[styles.downframeDestinationDisplayer, { backgroundColor: theme.MainBackground100 }]}>
                         <View style={styles.downFrame}>
-                            <View style={styles.secondaryDownFrame}>
-                                <StarIcon height={25} preserveAspectRatio="xMidYMid meet" />
-                                <ThemedText style={[styles.destinationText, { color: theme.MainTextBlack }]}>Waypoints</ThemedText>
-                            </View>
+                            {/* WAYPOINTS */}
+                            <Pressable onPress={() => router.push("/(main)/waypoints")}>
+                                <View style={styles.secondaryDownFrame}>
+                                    <StarIcon height={25} preserveAspectRatio="xMidYMid meet" />
+                                    <ThemedText style={[styles.destinationText, { color: theme.MainTextBlack }]}>Waypoints</ThemedText>
+                                </View>
+                            </Pressable>
 
+                            {/* CLOCK */}
                             <View style={[styles.clockFrame, { borderLeftColor: theme.BackgroundAwardCards }]}>
                                 <ClockButton height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
                             </View>
