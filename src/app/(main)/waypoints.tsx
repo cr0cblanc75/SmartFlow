@@ -24,8 +24,17 @@ export default function HomeScreen() {
 
     const [timeDep, setTimeDep] = useState(new Date());
     const [showDep, setShowDep] = useState(false);
+    const [arrGiven, setArrGiven] = useState(false);
     const [timeArr, setTimeArr] = useState(new Date());
     const [showArr, setShowArr] = useState(false);
+
+    const formatParisTime = (date: Date) => {
+        return date.toLocaleTimeString("fr-FR", {
+            timeZone: "Europe/Paris",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    };
 
     // Récupération des insets de sécurité pour gérer les marges et le padding -> (doit être sur chaque page)
     const safeAreaInsets = useSafeAreaInsets();
@@ -77,7 +86,7 @@ export default function HomeScreen() {
                                 <View style={{ paddingRight: Spacing.three }}>
                                     {/* Heure */}
                                     <Pressable onPress={() => setShowDep(true)}>
-                                        <ThemedText>
+                                        <ThemedText style={{ width: 40, textAlign: "center" }}>
                                             {timeDep.getHours().toString().padStart(2, "0")}:{timeDep.getMinutes().toString().padStart(2, "0")}
                                         </ThemedText>
                                     </Pressable>
@@ -119,9 +128,7 @@ export default function HomeScreen() {
                                 <View style={{ paddingRight: Spacing.three }}>
                                     {/* Heure */}
                                     <Pressable onPress={() => setShowArr(true)}>
-                                        <ThemedText>
-                                            {timeArr.getHours().toString().padStart(2, "0")}:{timeArr.getMinutes().toString().padStart(2, "0")}
-                                        </ThemedText>
+                                        <ThemedText style={{ width: 40, textAlign: "center" }}>{arrGiven === false ? "- - : - -" : `${timeArr.getHours().toString().padStart(2, "0")}:${timeArr.getMinutes().toString().padStart(2, "0")}`} </ThemedText>
                                     </Pressable>
 
                                     {/* overlay hour-picker */}
@@ -134,6 +141,7 @@ export default function HomeScreen() {
                                                 if (event.type === "set" && selectedDate) {
                                                     setTimeArr(selectedDate);
                                                 }
+                                                setArrGiven(true);
                                                 setShowArr(false);
                                             }}
                                         />
@@ -143,24 +151,33 @@ export default function HomeScreen() {
                         </View>
                     </View>
 
-                    <ScrollView style={styles.waypointDisplayer} showsVerticalScrollIndicator={false}>
-                        <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Medznu</ThemedText>
-                        <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Menu</ThemedText>
-                        <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Medznu</ThemedText>
-                        <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Mendzu</ThemedText>
-                        <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Medznu</ThemedText>
-                        <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Mdzenu</ThemedText>
-                        <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Medznu</ThemedText>
-                        <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Medznu</ThemedText>
-                        <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Mdzenu</ThemedText>
-                        <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Medznu</ThemedText>
-                        <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Menu</ThemedText>
-                        <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Medznu</ThemedText>
-                        <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Menu</ThemedText>
-                        <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Mdzenu</ThemedText>
-                        <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Menu</ThemedText>
-                        <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Medznu</ThemedText>
-                    </ScrollView>
+                    <View style={styles.waypointDisplayer}>
+                        <View style={[{ borderBottomWidth: 2, borderBottomColor: theme.MainTextBlack, paddingBottom: Spacing.two }]}>
+                            <ThemedText style={[styles.waypointTitle, { color: theme.MainTextBlack }]}>Vos Waypoints</ThemedText>
+                        </View>
+
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 1</ThemedText>
+                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 2</ThemedText>
+                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 3</ThemedText>
+                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 4</ThemedText>
+                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 5</ThemedText>
+                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 6</ThemedText>
+                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 7</ThemedText>
+                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 8</ThemedText>
+                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 9</ThemedText>
+                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 10</ThemedText>
+                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 11</ThemedText>
+                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 12</ThemedText>
+                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 13</ThemedText>
+                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 14</ThemedText>
+                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 15</ThemedText>
+                        </ScrollView>
+                    </View>
+
+                    <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => console.log({ Depart, Arrivee, timeDep: formatParisTime(timeDep), timeArr: formatParisTime(timeArr) })}>
+                        <ThemedText style={[styles.buttonText, { color: theme.MainTextBlack }]}>Go {" >"}</ThemedText>
+                    </Pressable>
                 </View>
             </AnimatedScreen>
         </>
@@ -168,7 +185,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-    // ------------------------- Button/Menu displayer -------------------------
+    // ------------------------- Whole displayer -------------------------
     bottomBox: {
         position: "absolute",
         overflow: "visible",
@@ -182,6 +199,7 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 10,
 
         padding: Spacing.two,
+        paddingHorizontal: Spacing.five,
         zIndex: 10,
         elevation: 10,
     },
@@ -311,9 +329,50 @@ const styles = StyleSheet.create({
     // ------------------------- Waypoints Box -------------------------
 
     waypointDisplayer: {
-        width: "auto",
+        flex: 1,
         maxHeight: 300,
 
-        paddingTop: 60,
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+
+        paddingTop: 45,
+    },
+
+    waypointTitle: {
+        fontWeight: FontWeight.Bold,
+        fontSize: 22,
+    },
+
+    // ------------------------- Button "Go" -------------------------
+    button: {
+        height: 40,
+
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        alignSelf: "flex-end",
+
+        paddingVertical: Spacing.two,
+        paddingHorizontal: Spacing.five,
+
+        borderRadius: 12,
+
+        // iOS shadow
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+
+        // Android shadow
+        elevation: 2,
+    },
+
+    buttonText: {
+        fontWeight: FontWeight.Bold,
+        fontSize: 18,
     },
 });

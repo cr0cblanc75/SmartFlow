@@ -3,7 +3,7 @@
 ## login.tsx
 
 - [x] Si "Identifiant" ou "Mot de passe" vide, mettre un message d'erreur, afficher un truc en rouge, ou autre
-- [x] Afficher des * à la place du mdp quand il est entré
+- [x] Afficher des \* à la place du mdp quand il est entré
 
 ## inscription.tsx
 
@@ -16,6 +16,10 @@
 ## home_map.tsx
 
 - [x] Insets top (pour affichage bouttons +/- map)
+
+## waypoints.tsx
+
+- [ ] Ajout automatique (via composant React) des waypoints dans la liste déroulant
 
 ## leaflet.tsx
 
