@@ -1,4 +1,6 @@
-import { Platform, StyleSheet, View } from "react-native";
+import { useState } from "react";
+
+import { Platform, StyleSheet, View, TextInput } from "react-native";
 import { useTheme } from "@/hooks/use-theme";
 import { FontWeight, Spacing } from "@/constants/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -18,6 +20,7 @@ import Map from "@/leaflet/leaflet";
 import { ThemedText } from "@/components/themed-text";
 
 export default function HomeScreen() {
+    const [Destination, setDestination] = useState("");
     const theme = useTheme();
     const router = useRouter();
 
@@ -56,7 +59,14 @@ export default function HomeScreen() {
                     <View style={[styles.upperframeDestinationDisplayer, { backgroundColor: theme.MainBackground100, borderBottomColor: theme.BackgroundAwardCards }]}>
                         <View style={styles.upperFrame}>
                             <LogoNavbar height={25} preserveAspectRatio="xMidYMid meet" />
-                            <ThemedText style={[styles.destinationText, { color: theme.MainTextBlack }]}>Prochaine destination ?</ThemedText>
+                            <TextInput
+                                style={[styles.destinationText, { color: theme.MainTextBlack }]}
+                                placeholder="Prochaine destination ?"
+                                placeholderTextColor={theme.TextBlackOpa60}
+                                value={Destination} // 1. Affiche ce qui est dans la mémoire
+                                onChangeText={(val) => setDestination(val)} // 2. Met à jour la mémoire à chaque lettre
+                            />
+                            {/*<ThemedText style={[styles.destinationText, { color: theme.MainTextBlack }]}>Prochaine destination ?</ThemedText>*/}
                         </View>
                     </View>
 
@@ -192,10 +202,12 @@ const styles = StyleSheet.create({
     },
 
     upperFrame: {
+        maxHeight: 43,
         width: "100%",
         display: "flex",
         flexDirection: "row",
         justifyContent: "flex-start",
+        alignItems: "center",
         gap: 10,
 
         paddingLeft: Spacing.three,
@@ -214,6 +226,7 @@ const styles = StyleSheet.create({
     },
 
     downFrame: {
+        maxHeight: 43,
         width: "100%",
         display: "flex",
         flexDirection: "row",
@@ -233,8 +246,11 @@ const styles = StyleSheet.create({
     },
 
     destinationText: {
+        flex: 1,
         fontWeight: FontWeight.Bold,
         fontSize: 16,
+        margin: 0,
+        paddingVertical: 0,
     },
 
     clockFrame: {

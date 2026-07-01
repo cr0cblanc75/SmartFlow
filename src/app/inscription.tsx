@@ -20,10 +20,35 @@ export default function HomeScreen() {
     const [mdp, setMdp] = useState("");
     const [mail, setMail] = useState("");
     const [city, setCity] = useState("");
+    const [isChecked, setIsChecked] = useState(false);
     const theme = useTheme();
     const router = useRouter();
+    const [errorMessage, setErrorMessage] = useState("");
 
-    const [isChecked, setIsChecked] = useState(false);
+    const handleLogin = () => {
+        if (!ID.trim()) {
+            setErrorMessage("L'identifiant ne peut pas être vide.");
+            return;
+        }
+        if (!mdp.trim()) {
+            setErrorMessage("Le mot de passe est requis.");
+            return;
+        }
+        if (!mail.trim()) {
+            setErrorMessage("Le mail est requis.");
+            return;
+        }
+        if (!city.trim()) {
+            setErrorMessage("La ville est requise.");
+            return;
+        }
+        if (!isChecked) {
+            setErrorMessage("Veuillez accepter les conditions d'utilisation.");
+            return;
+        }
+        setErrorMessage("");
+        router.push("/(main)/home_map");
+    };
 
     const safeAreaInsets = useSafeAreaInsets();
     const insets = {
@@ -72,7 +97,10 @@ export default function HomeScreen() {
                                 placeholder="Identifiant..."
                                 placeholderTextColor={theme.TextBlackOpa60}
                                 value={ID} // 1. Affiche ce qui est dans la mémoire
-                                onChangeText={(val) => setID(val)} // 2. Met à jour la mémoire à chaque lettre
+                                onChangeText={(val) => {
+                                    setID(val);
+                                    if (val.trim()) setErrorMessage("");
+                                }}
                             />
                         </View>
 
@@ -82,7 +110,10 @@ export default function HomeScreen() {
                                 placeholder="Mail..."
                                 placeholderTextColor={theme.TextBlackOpa60}
                                 value={mail} // 1. Affiche ce qui est dans la mémoire
-                                onChangeText={(val) => setMail(val)} // 2. Met à jour la mémoire à chaque lettre
+                                onChangeText={(val) => {
+                                    setMail(val);
+                                    if (val.trim()) setErrorMessage("");
+                                }}
                             />
                         </View>
 
@@ -92,7 +123,10 @@ export default function HomeScreen() {
                                 placeholder="City..."
                                 placeholderTextColor={theme.TextBlackOpa60}
                                 value={city} // 1. Affiche ce qui est dans la mémoire
-                                onChangeText={(val) => setCity(val)} // 2. Met à jour la mémoire à chaque lettre
+                                onChangeText={(val) => {
+                                    setCity(val);
+                                    if (val.trim()) setErrorMessage("");
+                                }}
                             />
                         </View>
 
@@ -102,23 +136,29 @@ export default function HomeScreen() {
                                 placeholder="Mot de passe..."
                                 placeholderTextColor={theme.TextBlackOpa60}
                                 value={mdp} // 1. Affiche ce qui est dans la mémoire
-                                onChangeText={(val) => setMdp(val)} // 2. Met à jour la mémoire à chaque lettre
+                                onChangeText={(val) => {
+                                    setMdp(val);
+                                    if (val.trim()) setErrorMessage("");
+                                }}
                             />
                         </View>
-                    </View>
 
-                    {/*Acceptez les termes et conditions*/}
-                    <View style={styles.containerCheckbox}>
-                        <Pressable style={[styles.checkboxBase, { borderColor: isChecked ? "#86D74F" : "#CCCCCC" }, isChecked && { backgroundColor: "#86D74F" }]} onPress={() => setIsChecked(!isChecked)}>
-                            {isChecked && <View style={styles.checkboxCheckedInner} />}
-                        </Pressable>
-                        <Pressable style={styles.buttonCheckbox} onPress={() => setIsChecked(!isChecked)}>
-                            <ThemedText style={styles.textCheckBox}>J'accepte les termes et conditions</ThemedText>
-                        </Pressable>
-                    </View>
+                        {errorMessage ? (
+                            <ThemedText style={styles.errorText}>{errorMessage}</ThemedText>
+                        ) : null}
 
-                    <View style={styles.formContainer}>
-                        <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => router.push("/inscription_validated")}>
+                        {/*Acceptez les termes et conditions*/}
+                        <View style={styles.containerCheckbox}>
+                            <Pressable style={[styles.checkboxBase, { borderColor: isChecked ? "#86D74F" : "#CCCCCC" }, isChecked && { backgroundColor: "#86D74F" }]} onPress={() => setIsChecked(!isChecked)}>
+                                {isChecked && <View style={styles.checkboxCheckedInner} />}
+                            </Pressable>
+                            <Pressable style={styles.buttonCheckbox} onPress={() => setIsChecked(!isChecked)}>
+                                <ThemedText style={styles.textCheckBox}>J'accepte les termes et conditions</ThemedText>
+                            </Pressable>
+                        </View>
+
+                    
+                        <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={handleLogin}>
                             <ThemedText style={[styles.buttonText, { color: theme.MainTextWhite }]}>S'inscrire</ThemedText>
                         </Pressable>
                     </View>
@@ -231,6 +271,14 @@ const styles = StyleSheet.create({
     buttonText: {
         fontWeight: FontWeight.SemiBold,
         fontSize: 18,
+    },
+    errorText: {
+        color: "#FF3B30", // Un beau rouge iOS / Android standard pour les erreurs
+        fontSize: 14,
+        fontWeight: "600",
+        marginBottom: 10,
+        alignSelf: "flex-start", // S'aligne parfaitement sur le bord gauche de ton conteneur à 90%
+        paddingLeft: 4,
     },
 
     // ------------------------- Styles for the label of the TextInput -------------------------

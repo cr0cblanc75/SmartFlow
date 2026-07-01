@@ -98,6 +98,7 @@ const styles = StyleSheet.create({
     centerZone: {
         display: "flex",
         flexDirection: "column",
+        alignItems: "center",
         justifyContent: "space-between",
         marginVertical: "auto",
     },
@@ -123,6 +124,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         gap: 20,
+        marginBottom: Spacing.six,
     },
 
     titleFrame: {
@@ -147,7 +149,7 @@ const styles = StyleSheet.create({
     boxIncipit: {
         display: "flex",
         flexDirection: "column",
-        alignItems: "flex-start",
+        alignItems: "center",
         alignSelf: "center",
         gap: 20,
 
@@ -160,11 +162,14 @@ const styles = StyleSheet.create({
         fontSize: 26,
         lineHeight: 42,
         fontWeight: FontWeight.Bold,
+        textAlign: "center",
+        marginBottom: Spacing.two,
     },
 
     textIncipit: {
         fontSize: 14.5,
         fontWeight: FontWeight.Medium,
+        marginBottom: Spacing.six,
     },
 
     // ------------------------- Styles for the login button -------------------------

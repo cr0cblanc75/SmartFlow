@@ -17,6 +17,21 @@ export default function TabTwoScreen() {
     const [mdp, setMdp] = useState("");
     const theme = useTheme();
     const router = useRouter();
+    const [errorMessage, setErrorMessage] = useState("");
+
+    // Message d'erreur pour mdp ou indentifiant manquant
+    const handleLogin = () => {
+        if (!ID.trim()) {
+            setErrorMessage("L'identifiant ne peut pas être vide.");
+            return;
+        }
+        if (!mdp.trim()) {
+            setErrorMessage("Le mot de passe est requis.");
+            return;
+        }
+        setErrorMessage("");
+        router.push("/(main)/home_map");
+    };
 
     // Récupération des insets de sécurité pour gérer les marges et le padding -> (doit être sur chaque page)
     const safeAreaInsets = useSafeAreaInsets();
@@ -68,7 +83,10 @@ export default function TabTwoScreen() {
                             placeholder="Identifiant..."
                             placeholderTextColor={theme.TextBlackOpa60}
                             value={ID} // 1. Affiche ce qui est dans la mémoire
-                            onChangeText={(val) => setID(val)} // 2. Met à jour la mémoire à chaque lettre
+                            onChangeText={(val) => {
+                                setID(val);
+                                if (val.trim()) setErrorMessage("");
+                            }}
                         />
                     </View>
 
@@ -77,14 +95,20 @@ export default function TabTwoScreen() {
                             style={[styles.input, { backgroundColor: theme.MainBackground100, color: theme.text, borderColor: theme.text }]}
                             placeholder="Mot de passe..."
                             placeholderTextColor={theme.TextBlackOpa60}
+                            secureTextEntry={true}
                             value={mdp} // 1. Affiche ce qui est dans la mémoire
-                            onChangeText={(val) => setMdp(val)} // 2. Met à jour la mémoire à chaque lettre
+                            onChangeText={(val) => {
+                                setMdp(val);
+                                if (val.trim()) setErrorMessage("");
+                            }}
                         />
                     </View>
-                </View>
 
-                <View style={[styles.formContainer, { paddingTop: 0, paddingBottom: 0 }]}>
-                    <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => router.push("/(main)/home_map")}>
+                    {errorMessage ? (
+                        <ThemedText style={styles.errorText}>{errorMessage}</ThemedText>
+                    ) : null}
+
+                    <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={handleLogin}>
                         <ThemedText style={[styles.buttonText, { color: theme.MainTextWhite }]}>Login</ThemedText>
                     </Pressable>
 
@@ -154,6 +178,14 @@ const styles = StyleSheet.create({
     buttonText: {
         fontWeight: FontWeight.SemiBold,
         fontSize: 18,
+    },
+    errorText: {
+        color: "#FF3B30", // Un beau rouge iOS / Android standard pour les erreurs
+        fontSize: 14,
+        fontWeight: "600",
+        marginBottom: 10,
+        alignSelf: "flex-start", // S'aligne parfaitement sur le bord gauche de ton conteneur à 90%
+        paddingLeft: 4,
     },
 
     // ------------------------- Styles for the label of the TextInput -------------------------
