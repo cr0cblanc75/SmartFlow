@@ -6,6 +6,7 @@ import { FontWeight, Spacing } from "@/constants/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Pressable } from "react-native";
 import { useRouter } from "expo-router";
+import { WaypointsFrame } from "@/components/waypoints/waypoints_frame";
 
 import DateTimePicker from "@react-native-community/datetimepicker";
 
@@ -156,22 +157,22 @@ export default function HomeScreen() {
                             <ThemedText style={[styles.waypointTitle, { color: theme.MainTextBlack }]}>Vos Waypoints</ThemedText>
                         </View>
 
-                        <ScrollView showsVerticalScrollIndicator={false}>
-                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 1</ThemedText>
-                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 2</ThemedText>
-                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 3</ThemedText>
-                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 4</ThemedText>
-                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 5</ThemedText>
-                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 6</ThemedText>
-                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 7</ThemedText>
-                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 8</ThemedText>
-                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 9</ThemedText>
-                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 10</ThemedText>
-                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 11</ThemedText>
-                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 12</ThemedText>
-                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 13</ThemedText>
-                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 14</ThemedText>
-                            <ThemedText style={{ color: theme.MainTextBlack, fontWeight: FontWeight.Bold, fontSize: 16, paddingVertical: 0 }}>Composant 15</ThemedText>
+                        <ScrollView showsVerticalScrollIndicator={true}>
+                            <WaypointsFrame name="Composant 1" />
+                            <WaypointsFrame name="Composant 2" />
+                            <WaypointsFrame name="Composant 3" />
+                            <WaypointsFrame name="Composant 4" />
+                            <WaypointsFrame name="Composant 5" />
+                            <WaypointsFrame name="Composant 6" />
+                            <WaypointsFrame name="Composant 7" />
+                            <WaypointsFrame name="Composant 8" />
+                            <WaypointsFrame name="Composant 9" />
+                            <WaypointsFrame name="Composant 10" />
+                            <WaypointsFrame name="Composant 11" />
+                            <WaypointsFrame name="Composant 12" />
+                            <WaypointsFrame name="Composant 13" />
+                            <WaypointsFrame name="Composant 14" />
+                            <WaypointsFrame name="Composant 15" />
                         </ScrollView>
                     </View>
 
