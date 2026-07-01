@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
         alignItems: "flex-start",
         gap: 10,
 
-        padding: Spacing.two,
+        padding: Spacing.three,
 
         borderRadius: 12,
     },

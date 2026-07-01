@@ -66,7 +66,7 @@ export default function HomeScreen() {
 
             {/* GREEN BOX OVERLAY */}
             <AnimatedScreen type="slide-from-bottom" duration={200}>
-                <View style={[styles.bottomBox, { backgroundColor: theme.MainBackground200, paddingBottom: safeAreaInsets.bottom + 30 }]}>
+                <View style={[styles.bottomBox, { backgroundColor: theme.MainBackground200, paddingBottom: safeAreaInsets.bottom + 15 }]}>
                     {/* Destination displayer */}
                     <View style={styles.destinationDisplayer}>
                         {/* ---------- Upper ---------- */}
@@ -152,12 +152,12 @@ export default function HomeScreen() {
                         </View>
                     </View>
 
-                    <View style={styles.waypointDisplayer}>
+                    <View style={styles.waypointDisplayerBigBox}>
                         <View style={[{ borderBottomWidth: 2, borderBottomColor: theme.MainTextBlack, paddingBottom: Spacing.two }]}>
-                            <ThemedText style={[styles.waypointTitle, { color: theme.MainTextBlack }]}>Vos Waypoints</ThemedText>
+                            <ThemedText style={[styles.waypointTitleBigBox, { color: theme.MainTextBlack }]}>Vos Waypoints</ThemedText>
                         </View>
 
-                        <ScrollView showsVerticalScrollIndicator={true}>
+                        <ScrollView contentContainerStyle={styles.waypointFrame} showsVerticalScrollIndicator={true}>
                             <WaypointsFrame name="Composant 1" />
                             <WaypointsFrame name="Composant 2" />
                             <WaypointsFrame name="Composant 3" />
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
 
     // ------------------------- Waypoints Box -------------------------
 
-    waypointDisplayer: {
+    waypointDisplayerBigBox: {
         flex: 1,
         maxHeight: 300,
 
@@ -340,9 +340,15 @@ const styles = StyleSheet.create({
         paddingTop: 45,
     },
 
-    waypointTitle: {
+    waypointTitleBigBox: {
         fontWeight: FontWeight.Bold,
         fontSize: 22,
+    },
+
+    waypointFrame: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
     },
 
     // ------------------------- Button "Go" -------------------------
@@ -356,6 +362,8 @@ const styles = StyleSheet.create({
 
         paddingVertical: Spacing.two,
         paddingHorizontal: Spacing.five,
+
+        marginTop: Spacing.three,
 
         borderRadius: 12,
 
