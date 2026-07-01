@@ -144,12 +144,20 @@ function findStopsByFuzzyName(nodes, normalizedQuery, maxDistance) {
 }
 
 // ─── HH:MM -> secondes ────────────────────────────────────────────────────────
+// Convention horaire GTFS : les courses de nuit continuent au-dela de minuit
+// sur la meme journee de service (24:00, 25:30, ...) plutot que de repartir
+// a 00:00. Une heure saisie sous ce seuil (ex: "00:05") designe donc toujours
+// la continuation de la soiree en cours, jamais le tout debut d'une nouvelle
+// journee : on la decale de +24h pour rester coherente avec timetable.json.
+const NIGHT_ROLLOVER_HOUR = 4;
+
 function timeToSeconds(t) {
   if (!t) return 0;
   const parts = t.trim().split(":");
-  const h = parseInt(parts[0], 10) || 0;
+  let h = parseInt(parts[0], 10) || 0;
   const m = parseInt(parts[1], 10) || 0;
   const s = parseInt(parts[2], 10) || 0;
+  if (h < NIGHT_ROLLOVER_HOUR) h += 24;
   return h * 3600 + m * 60 + s;
 }
 
@@ -540,6 +548,10 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
       } else {
         // Transfer : on remonte simplement du temps de correspondance
         boardSec = currentSec - edge.weight;
+        // Avant minuit (temps negatif), aucune donnee horaire ne couvre ce
+        // depart dans ce modele mono-journee : on ecarte l'arete plutot que
+        // de propager un temps de depart negatif/corrompu.
+        if (boardSec < 0) continue;
       }
 
       if (boardSec > dist[edge.to]) {
