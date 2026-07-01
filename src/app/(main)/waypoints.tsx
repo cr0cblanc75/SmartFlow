@@ -62,37 +62,41 @@ export default function HomeScreen() {
                         {/* ---------- Upper ---------- */}
                         <View style={[styles.upperframeDestinationDisplayer, { backgroundColor: theme.MainBackground100, borderBottomColor: theme.BackgroundAwardCards }]}>
                             <View style={styles.upperFrame}>
-                                <LogoNavbar height={25} preserveAspectRatio="xMidYMid meet" />
-                                <TextInput style={[styles.destinationText, { color: theme.MainTextBlack }]} multiline={false} placeholder="Départ" placeholderTextColor={theme.TextBlackOpa60} value={Depart} onChangeText={(val) => setDepart(val)} />
-                            </View>
+                                {/* Départ */}
+                                <View style={styles.secondaryDownFrame}>
+                                    <LogoNavbar height={25} preserveAspectRatio="xMidYMid meet" />
+                                    <View style={{ flex: 1, minWidth: 0 }}>
+                                        <TextInput style={[styles.destinationText, { color: theme.MainTextBlack }]} multiline={false} placeholder="Départ" placeholderTextColor={theme.TextBlackOpa60} value={Depart} onChangeText={(val) => setDepart(val)} />
+                                    </View>
+                                </View>
+                                {/* CLOCK */}
+                                <View style={[styles.clockFrame, { borderLeftColor: theme.BackgroundAwardCards }]}>
+                                    <ClockButton height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
+                                </View>
+                                {/* HOUR OVERLAY*/}
+                                <View style={{ paddingRight: Spacing.three }}>
+                                    {/* Heure */}
+                                    <Pressable onPress={() => setShowDep(true)}>
+                                        <ThemedText>
+                                            {timeDep.getHours().toString().padStart(2, "0")}:{timeDep.getMinutes().toString().padStart(2, "0")}
+                                        </ThemedText>
+                                    </Pressable>
 
-                            {/* CLOCK */}
-                            <View style={[styles.clockFrame, { borderLeftColor: theme.BackgroundAwardCards }]}>
-                                <ClockButton height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
-                            </View>
-                            {/* HOUR OVERLAY*/}
-                            <View style={{ paddingRight: Spacing.three }}>
-                                {/* Heure */}
-                                <Pressable onPress={() => setShowDep(true)}>
-                                    <ThemedText>
-                                        {timeDep.getHours()}:{timeDep.getMinutes().toString().padStart(2, "0")}
-                                    </ThemedText>
-                                </Pressable>
-
-                                {/* overlay hour-picker */}
-                                {showDep && (
-                                    <DateTimePicker
-                                        value={timeDep}
-                                        mode="time"
-                                        display="spinner"
-                                        onChange={(event, selectedDate) => {
-                                            if (event.type === "set" && selectedDate) {
-                                                setTimeDep(selectedDate);
-                                            }
-                                            setShowDep(false);
-                                        }}
-                                    />
-                                )}
+                                    {/* overlay hour-picker */}
+                                    {showDep && (
+                                        <DateTimePicker
+                                            value={timeDep}
+                                            mode="time"
+                                            display="spinner"
+                                            onChange={(event, selectedDate) => {
+                                                if (event.type === "set" && selectedDate) {
+                                                    setTimeDep(selectedDate);
+                                                }
+                                                setShowDep(false);
+                                            }}
+                                        />
+                                    )}
+                                </View>
                             </View>
                         </View>
 
@@ -116,7 +120,7 @@ export default function HomeScreen() {
                                     {/* Heure */}
                                     <Pressable onPress={() => setShowArr(true)}>
                                         <ThemedText>
-                                            {timeArr.getHours()}:{timeArr.getMinutes().toString().padStart(2, "0")}
+                                            {timeArr.getHours().toString().padStart(2, "0")}:{timeArr.getMinutes().toString().padStart(2, "0")}
                                         </ThemedText>
                                     </Pressable>
 
@@ -218,6 +222,9 @@ const styles = StyleSheet.create({
     upperframeDestinationDisplayer: {
         width: "100%",
 
+        display: "flex",
+        flexDirection: "row",
+
         borderTopLeftRadius: 12,
         borderTopRightRadius: 12,
 
@@ -230,14 +237,21 @@ const styles = StyleSheet.create({
 
         display: "flex",
         flexDirection: "row",
-        justifyContent: "flex-start",
+        justifyContent: "space-between",
+        gap: 10,
+
         alignItems: "center",
+    },
+
+    secondaryUpperFrame: {
+        minWidth: 0,
+        flex: 1,
+
+        display: "flex",
+        flexDirection: "row",
         gap: 10,
 
         paddingLeft: Spacing.three,
-        paddingRight: Spacing.three,
-        paddingTop: Spacing.two,
-        paddingBottom: Spacing.two,
     },
 
     // -------- Down Layer --------
