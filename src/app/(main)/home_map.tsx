@@ -53,35 +53,37 @@ export default function HomeScreen() {
             {/* GREEN BOX OVERLAY */}
             <View style={[styles.bottomBox, { backgroundColor: theme.MainBackground200, paddingBottom: safeAreaInsets.bottom + 30 }]}>
                 {/* Destination displayer */}
-                <View style={styles.destinationDisplayer}>
-                    {/* Upper */}
-                    <View style={[styles.upperframeDestinationDisplayer, { backgroundColor: theme.MainBackground100, borderBottomColor: theme.BackgroundAwardCards }]}>
-                        <Pressable onPress={() => router.push("/(main)/waypoints")}>
-                            <View style={styles.upperFrame}>
-                                <LogoNavbar height={25} preserveAspectRatio="xMidYMid meet" />
-                                <ThemedText style={[styles.destinationText, { color: theme.MainTextBlack }]}>Prochaine destination ?</ThemedText>
-                            </View>
-                        </Pressable>
-                    </View>
 
-                    {/* Bottom */}
-                    <View style={[styles.downframeDestinationDisplayer, { backgroundColor: theme.MainBackground100 }]}>
-                        <View style={styles.downFrame}>
-                            {/* WAYPOINTS */}
+                <Pressable onPress={() => router.push("/(main)/waypoints")}>
+                    <View style={styles.destinationDisplayer}>
+                        {/* Upper */}
+
+                        <View style={[styles.upperframeDestinationDisplayer, { backgroundColor: theme.MainBackground100, borderBottomColor: theme.BackgroundAwardCards }]}>
                             <Pressable onPress={() => router.push("/(main)/waypoints")}>
+                                <View style={styles.upperFrame}>
+                                    <LogoNavbar height={25} preserveAspectRatio="xMidYMid meet" />
+                                    <ThemedText style={[styles.destinationText, { color: theme.MainTextBlack }]}>Prochaine destination ?</ThemedText>
+                                </View>
+                            </Pressable>
+                        </View>
+
+                        {/* Bottom */}
+                        <View style={[styles.downframeDestinationDisplayer, { backgroundColor: theme.MainBackground100 }]}>
+                            <View style={styles.downFrame}>
+                                {/* WAYPOINTS */}
                                 <View style={styles.secondaryDownFrame}>
                                     <StarIcon height={25} preserveAspectRatio="xMidYMid meet" />
                                     <ThemedText style={[styles.destinationText, { color: theme.MainTextBlack }]}>Waypoints</ThemedText>
                                 </View>
-                            </Pressable>
 
-                            {/* CLOCK */}
-                            <View style={[styles.clockFrame, { borderLeftColor: theme.BackgroundAwardCards }]}>
-                                <ClockButton height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
+                                {/* CLOCK */}
+                                <View style={[styles.clockFrame, { borderLeftColor: theme.BackgroundAwardCards }]}>
+                                    <ClockButton height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
+                                </View>
                             </View>
                         </View>
                     </View>
-                </View>
+                </Pressable>
 
                 {/* Button Menu displayer */}
                 <View style={styles.buttonColumn}>

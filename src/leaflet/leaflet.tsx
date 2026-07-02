@@ -1,16 +1,37 @@
 import { View } from "react-native";
 import { WebView } from "react-native-webview";
 import { useColorScheme } from "react-native";
+import { waypoints } from "@/data/waypoints";
+import { forwardRef, useImperativeHandle, useRef } from "react";
 
-export default function Map() {
+export interface MapRef {
+    centerMap: (lat: number, lng: number, id?: number) => void;
+}
+
+const Map = forwardRef<MapRef>((props, ref) => {
+    const webViewRef = useRef<WebView>(null);
     const colorScheme = useColorScheme();
 
     const DarkModeMap = colorScheme === "dark" ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
     const mapFilter = colorScheme === "dark" ? "brightness(2.3) contrast(1) saturate(0.9)" : "none";
 
+    useImperativeHandle(ref, () => ({
+        centerMap(lat: number, lng: number, id?: number) {
+            webViewRef.current?.postMessage(
+                JSON.stringify({
+                    type: "CENTER_MAP",
+                    lat,
+                    lng,
+                    id,
+                }),
+            );
+        },
+    }));
+
     return (
         <View style={{ flex: 1 }}>
             <WebView
+                ref={webViewRef}
                 style={{ flex: 1 }}
                 originWhitelist={["*"]}
                 javaScriptEnabled
@@ -35,7 +56,7 @@ export default function Map() {
                     <body>
                     <div id="map"></div>
 
-                    <script>
+                    <script>                    
                     const map = L.map("map", {
                         zoomControl: false
                     }).setView([48.8566, 2.3522], 13);
@@ -63,43 +84,53 @@ export default function Map() {
                     }).addTo(map);
 
                     // MARKER LIST
-                    const waypoints = [
-                    { id: 1, lat: 48.788741, lng: 2.363725, label: "Efrei Paris" },
-                    { id: 2, lat: 48.846249, lng: 2.346409, label: "Le Panthéon" },
-                    { id: 3, lat: 48.845908, lng: 2.349079, label: "Le Bateau Ivre" },
-                    { id: 4, lat: 48.843507, lng: 2.359379, label: "Jardin des Plantes" },
-                    { id: 5, lat: 48.853227, lng: 2.350153, label: "Notre-Dame" },
-                    { id: 6, lat: 48.860706, lng: 2.337432, label: "Le Louvre" },
-                    { id: 9, lat: 48.862120, lng: 2.346668, label: "Les Halles - Chatelet" },
-                    { id: 10, lat: 48.87263, lng: 2.331246, label: "Parlais Garnier" },
-                    { id: 11, lat: 48.88687, lng: 2.338142, label: "Montmartre" },
-                    { id: 12, lat: 48.87334, lng: 2.295190, label: "Arc de Triomphe" },
-                    { id: 13, lat: 48.85546, lng: 2.311022, label: "Les Invalides" },
-                    { id: 14, lat: 48.84252, lng: 2.322411, label: "Montparnasse" },
-                    { id: 15, lat: 48.84682, lng: 2.337203, label: "Parc du Luxembourg" },
-                    { id: 16, lat: 48.86124, lng: 2.394740, label: "Cimetière Père Lachaise" },
-                    { id: 17, lat: 48.84839, lng: 2.395899, label: "Nation" },
-                    { id: 18, lat: 48.83364, lng: 2.375745, label: "Bibliothèque François-Mitterand" },
-                    { id: 19, lat: 48.83146, lng: 2.355532, label: "Place d'Italie" },
-                    { id: 20, lat: 48.82160, lng: 2.358573, label: "Maison Blanche" },
-                    { id: 21, lat: 48.89052, lng: 2.242103, label: "La Défense" },
-                    { id: 22, lat: 48.86762, lng: 2.363986, label: "République" },
-                    ];
+                    const waypoints = ${JSON.stringify(waypoints)};
                     const markersLayer = L.layerGroup().addTo(map);
+                    const markersById = {};
 
                     function renderMarkers() {
-                    markersLayer.clearLayers();
+                        markersLayer.clearLayers();
 
-                    waypoints.forEach((wp) => {
-                        const marker = L.marker([wp.lat, wp.lng], { icon: customIcon })
-                            .bindPopup(wp.label);
+                        waypoints.forEach((wp) => {
+                            const marker = L.marker([wp.lat, wp.lng], { icon: customIcon })
+                                .bindPopup(wp.label);
 
-                        markersLayer.addLayer(marker);
+                            markersById[wp.id] = marker;
+
+                            markersLayer.addLayer(marker);
                         });
                     }
                     renderMarkers();
-
                     
+
+                   document.addEventListener("message", (event) => {
+                    const message = JSON.parse(event.data);
+
+                    if (message.type === "CENTER_MAP") {
+                        const zoom = 15;
+
+                        // convertit lat/lng → pixels
+                        const point = map.project([message.lat, message.lng], zoom);
+
+                        // décale vers le haut
+                        const offsetPoint = point.subtract([0, -150]);
+
+                        // reconvertit pixels → lat/lng
+                        const newCenter = map.unproject(offsetPoint, zoom);
+
+                        map.flyTo(newCenter, zoom, {
+                            animate: true,
+                            duration: 1,
+                            });
+                        }
+
+                        // ouvre le popup si id fourni
+                        if (message.id && markersById[message.id]) {
+                            setTimeout(() => {
+                                markersById[message.id].openPopup();
+                            }, 600); // attendre fin du flyTo
+                        }
+                    });           
 
                     </script>
 
@@ -110,4 +141,6 @@ export default function Map() {
             />
         </View>
     );
-}
+});
+
+export default Map;

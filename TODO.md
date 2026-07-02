@@ -19,7 +19,9 @@
 
 ## waypoints.tsx
 
-- [ ] Ajout automatique (via composant React) des waypoints dans la liste déroulant
+- [x] Ajout automatique (via composant React) des waypoints dans la liste déroulant
+- [x] Centrer la Map si on click sur un waypoint
+- [x] Ouvrir l'info bulle (label) du waypoint sélctionné/centré
 
 ## leaflet.tsx
 

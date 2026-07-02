@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Platform, StyleSheet, View, TextInput, ScrollView } from "react-native";
 import { useTheme } from "@/hooks/use-theme";
@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { WaypointsFrame } from "@/components/waypoints/waypoints_frame";
+import { waypoints } from "@/data/waypoints";
 
 import DateTimePicker from "@react-native-community/datetimepicker";
 
@@ -14,7 +15,7 @@ import LogoNavbar from "@/assets/Logo-NavBar.svg";
 import ClockButton from "@/assets/Clock.svg";
 
 import { AnimatedScreen } from "@/components/AnimatedScreen";
-import Map from "@/leaflet/leaflet";
+import Map, { MapRef } from "@/leaflet/leaflet";
 import { ThemedText } from "@/components/themed-text";
 
 export default function HomeScreen() {
@@ -28,6 +29,8 @@ export default function HomeScreen() {
     const [arrGiven, setArrGiven] = useState(false);
     const [timeArr, setTimeArr] = useState(new Date());
     const [showArr, setShowArr] = useState(false);
+
+    const mapRef = useRef<MapRef>(null);
 
     const formatParisTime = (date: Date) => {
         return date.toLocaleTimeString("fr-FR", {
@@ -61,7 +64,7 @@ export default function HomeScreen() {
         <>
             {/* MAP */}
             <View style={StyleSheet.absoluteFill}>
-                <Map />
+                <Map ref={mapRef} />
             </View>
 
             {/* GREEN BOX OVERLAY */}
@@ -141,8 +144,8 @@ export default function HomeScreen() {
                                             onChange={(event, selectedDate) => {
                                                 if (event.type === "set" && selectedDate) {
                                                     setTimeArr(selectedDate);
+                                                    setArrGiven(true);
                                                 }
-                                                setArrGiven(true);
                                                 setShowArr(false);
                                             }}
                                         />
@@ -158,25 +161,13 @@ export default function HomeScreen() {
                         </View>
 
                         <ScrollView contentContainerStyle={styles.waypointFrame} showsVerticalScrollIndicator={true}>
-                            <WaypointsFrame name="Composant 1" />
-                            <WaypointsFrame name="Composant 2" />
-                            <WaypointsFrame name="Composant 3" />
-                            <WaypointsFrame name="Composant 4" />
-                            <WaypointsFrame name="Composant 5" />
-                            <WaypointsFrame name="Composant 6" />
-                            <WaypointsFrame name="Composant 7" />
-                            <WaypointsFrame name="Composant 8" />
-                            <WaypointsFrame name="Composant 9" />
-                            <WaypointsFrame name="Composant 10" />
-                            <WaypointsFrame name="Composant 11" />
-                            <WaypointsFrame name="Composant 12" />
-                            <WaypointsFrame name="Composant 13" />
-                            <WaypointsFrame name="Composant 14" />
-                            <WaypointsFrame name="Composant 15" />
+                            {waypoints.map((waypoint) => (
+                                <WaypointsFrame key={waypoint.id} name={waypoint.label} onPress={() => mapRef.current?.centerMap(waypoint.lat, waypoint.lng, waypoint.id)} />
+                            ))}
                         </ScrollView>
                     </View>
 
-                    <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => console.log({ Depart, Arrivee, timeDep: formatParisTime(timeDep), timeArr: formatParisTime(timeArr) })}>
+                    <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => console.log({ Depart, Arrivee, timeDep: formatParisTime(timeDep), timeArr: formatParisTime(timeArr), sameTime: formatParisTime(timeArr) === formatParisTime(timeDep) })}>
                         <ThemedText style={[styles.buttonText, { color: theme.MainTextBlack }]}>Go {" >"}</ThemedText>
                     </Pressable>
                 </View>
