@@ -15,6 +15,7 @@ export default function Layout() {
                 <Stack.Screen name="inscription_validated" />
                 <Stack.Screen name="(main)/home_map" />
                 <Stack.Screen name="(main)/waypoints" />
+                <Stack.Screen name="(main)/path" />
             </Stack>
         </ThemeProvider>
     );
