@@ -167,7 +167,7 @@ export default function HomeScreen() {
                         </ScrollView>
                     </View>
 
-                    <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => console.log({ Depart, Arrivee, timeDep: formatParisTime(timeDep), timeArr: formatParisTime(timeArr) })}>
+                    <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => console.log({ Depart, Arrivee, timeDep: formatParisTime(timeDep), timeArr: formatParisTime(timeArr), sameTime: formatParisTime(timeArr) === formatParisTime(timeDep) })}>
                         <ThemedText style={[styles.buttonText, { color: theme.MainTextBlack }]}>Go {" >"}</ThemedText>
                     </Pressable>
                 </View>
