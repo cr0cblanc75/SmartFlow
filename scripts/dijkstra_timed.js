@@ -953,7 +953,7 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
     };
 
     // ─────────────────────────────────────────────
-    // 🖨️ PRINT MODE (optionnel)
+    // PRINT MODE (optionnel)
     // ─────────────────────────────────────────────
     if (debug) {
         console.log(`------------------------------------------------------ Chemin trouve en ${elapsed}ms\n`);
