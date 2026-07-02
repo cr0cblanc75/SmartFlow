@@ -7,9 +7,11 @@ import DashLine from "@/assets/DashLine.svg";
 
 type PathFrameProps = {
     metro?: "M1" | "M2" | "M3" | "M3bis" | "M4" | "M5" | "M6" | "M7" | "M7bis" | "M8" | "M9" | "M10" | "M11" | "M12" | "M13" | "M14" | "M15" | "M16";
+    stopStation?: string;
+    isLast?: boolean;
 };
 
-export function PathFrame({ metro }: PathFrameProps) {
+export function PathFrame({ metro, stopStation = "<station>", isLast }: PathFrameProps) {
     const theme = useTheme();
 
     const metroColors: { [key: string]: string } = {
@@ -38,10 +40,12 @@ export function PathFrame({ metro }: PathFrameProps) {
                 <View style={[styles.metroIcon, { backgroundColor: metroColors[metro ?? "M1"] }]}>
                     <ThemedText style={[styles.metroTextIcon, { color: theme.MainTextBlack }]}>{metro}</ThemedText>
                 </View>
-                <DashLine height={25} width={2} preserveAspectRatio="xMidYMid meet" />
+                {!isLast && <DashLine height={25} width={2} preserveAspectRatio="xMidYMid meet" />}
             </View>
-            <View>
+            <View style={styles.textFrame}>
                 <ThemedText style={[styles.metroText, { color: theme.MainTextBlack }]}>Ligne {metro}</ThemedText>
+                <ThemedText style={[styles.stopAt_Text, { color: theme.MainTextBlack }]}>Stop à :</ThemedText>
+                <ThemedText style={[styles.stationText, { color: theme.MainTextBlack }]}>{stopStation}</ThemedText>
             </View>
         </View>
     );
@@ -85,8 +89,35 @@ const styles = StyleSheet.create({
 
     // ------------------- Right Box -------------------
 
+    textFrame: {
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        justifyContent: "flex-start",
+        gap: 6,
+
+        paddingRight: Spacing.five,
+    },
+
     metroText: {
         fontWeight: FontWeight.Bold,
         fontSize: 16,
+        lineHeight: 16,
+    },
+
+    stopAt_Text: {
+        fontWeight: FontWeight.SemiBold,
+        fontSize: 14,
+        lineHeight: 14,
+    },
+
+    stationText: {
+        width: "100%",
+        textAlign: "right",
+
+        fontWeight: FontWeight.Bold,
+        fontSize: 16,
+        lineHeight: 14,
     },
 });

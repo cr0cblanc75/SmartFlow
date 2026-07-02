@@ -109,9 +109,10 @@ export default function PathScreen() {
 
                     <View style={styles.waypointDisplayerBigBox}>
                         <ScrollView contentContainerStyle={[styles.waypointFrame, { backgroundColor: theme.MainBackground100 }]} showsVerticalScrollIndicator={true}>
-                            <PathFrame metro={"M7"} />
-                            <PathFrame metro={"M14"} />
-                            <PathFrame metro={"M3bis"} />
+                            <PathFrame metro={"M7"} stopStation="Station A" />
+                            <PathFrame metro={"M14"} stopStation="Station B" />
+                            <PathFrame metro={"M3bis"} stopStation="Station C" isLast={true} />
+                            <ThemedText> {`Dep: ${Depart}, Arr: ${Arrivee}, Dep: ${formatParisTime(depDate)}, Arr: ${formatParisTime(arrDate)}`}</ThemedText>
                         </ScrollView>
                     </View>
                 </View>
