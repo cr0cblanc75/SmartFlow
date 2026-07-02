@@ -1,11 +1,21 @@
 // Constantes pour le calcul Haversine et la Base Carbone
 const RAYON_TERRE_KM = 6371;
 const FACTEUR_DETOUR_BUS = 1.25;
+const VITESSE_MARCHE_KMH = 5; // vitesse moyenne d'un pieton, utilisee pour estimer
+// une distance a partir d'un temps de correspondance
 
 // 1. Facteurs d'Émission d'Exploitation (Amont + Combustion/Traction) en gCO2e / passager.km
 const FE_BUS_PARIS = 128.52;
 const FE_BUS_PETITE_COURONNE = 136.90;
 const FE_BUS_GRANDE_COURONNE = 145.68;
+
+// Reference "mode le plus sale" utilisee par le routeur SmartFlow pour
+// exprimer le cout carbone d'un troncon comme un ratio de propretee
+// (emission du mode / emission de cette reference), plutot qu'en grammes
+// bruts. C'est ce qui permet a beta d'avoir un effet progressif : le ratio
+// vaut ~1 pour un bus (le pire cas courant) et ~0.02-0.03 pour le rail,
+// quelle que soit la distance du troncon.
+const FE_REFERENCE_SALE_G_PAR_KM = FE_BUS_GRANDE_COURONNE;
 
 // Moyennes d'exploitation constatées sur les réseaux RATP / SNCF IDFM
 const FE_EXPLOITATION_METRO = 3.8;
@@ -17,19 +27,6 @@ const FE_EXPLOITATION_TRAMWAY = 2.2;
 const FE_FABRICATION_METRO = 0.22;       // gCO2e / passager.km
 const FE_FABRICATION_TRAMWAY = 0.41;     // gCO2e / passager.km
 const FE_FABRICATION_RER_TRAIN = 0.55;   // Moyenne d'amortissement SNCF au réel
-const VITESSE_MARCHE_M_S = 1.25;
-
-function normaliserModeTransport(mode = 'bus') {
-    if (typeof mode !== 'string') return 'bus';
-
-    const modeNettoye = mode.toLowerCase().trim();
-
-    if (modeNettoye === 'metro' || modeNettoye === 'métro') return 'metro';
-    if (modeNettoye === 'train' || modeNettoye === 'rer' || modeNettoye === 'transilien') return 'train';
-    if (modeNettoye === 'tramway' || modeNettoye === 'tram') return 'tramway';
-
-    return 'bus';
-}
 
 /**
  * Détermine la couronne IDFM par rapport au centre de Paris (Notre-Dame)
@@ -69,14 +66,6 @@ function calculerHaversineBrute(lat1, lon1, lat2, lon2) {
  * @param {string} mode 'bus', 'metro', 'train', 'tramway'
  */
 function calculerEmpreinteTroncon(nodeA, nodeB, mode = 'bus') {
-    if (!nodeA || !nodeB || typeof nodeA.latitude !== 'number' || typeof nodeA.longitude !== 'number' || typeof nodeB.latitude !== 'number' || typeof nodeB.longitude !== 'number') {
-        return {
-            distanceKm: 0,
-            co2Grams: 0,
-            details: { mode: normaliserModeTransport(mode), feExploitation: 0, feFabrication: 0, reason: 'coordonnees_manquantes' }
-        };
-    }
-
     const distanceBrute = calculerHaversineBrute(nodeA.latitude, nodeA.longitude, nodeB.latitude, nodeB.longitude);
 
     let distanceKm = distanceBrute;
@@ -84,7 +73,7 @@ function calculerEmpreinteTroncon(nodeA, nodeB, mode = 'bus') {
     let feFabrication = 0;
 
     // Normalisation du tag mode de transport
-    const modeNettoye = normaliserModeTransport(mode);
+    const modeNettoye = mode.toLowerCase().trim();
 
     switch (modeNettoye) {
         case 'metro':
@@ -131,23 +120,21 @@ function calculerEmpreinteTroncon(nodeA, nodeB, mode = 'bus') {
         details: { mode: modeNettoye, feExploitation, feFabrication }
     };
 }
-/**
- * Calcule la distance parcourue à pied à partir d'un temps donné.
- * Basé sur une vitesse de marche moyenne de 4.5 km/h (1.25 m/s).
- * @param {number} tempsMarcheSecondes - Le temps de marche total en secondes
- * @returns {number} La distance estimée en kilomètres
- */
-function calculerDistanceParTemps(tempsMarcheSecondes) {
-    if (!Number.isFinite(tempsMarcheSecondes) || tempsMarcheSecondes <= 0) {
-        return 0;
-    }
 
-    const distanceMetres = tempsMarcheSecondes * VITESSE_MARCHE_M_S;
-    return distanceMetres / 1000;
+/**
+ * Estime une distance parcourue a pied a partir d'une duree de correspondance.
+ * Utilise par les etapes de type "transfer" / "correspondance", pour lesquelles
+ * on ne dispose pas de coordonnees fiables mais seulement d'un temps de trajet.
+ * @param {number} travelSec duree du tronçon pieton, en secondes
+ */
+function calculerDistanceParTemps(travelSec) {
+    if (!travelSec || travelSec <= 0) return 0;
+    return (travelSec / 3600) * VITESSE_MARCHE_KMH;
 }
 
 module.exports = {
     calculerEmpreinteTroncon,
     calculerHaversineBrute,
-    calculerDistanceParTemps
+    calculerDistanceParTemps,
+    FE_REFERENCE_SALE_G_PAR_KM
 };
