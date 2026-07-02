@@ -1,5 +1,5 @@
 import Ping from "@/assets/Ping.svg";
-import { View, StyleSheet, Pressable } from "react-native";
+import { StyleSheet, Pressable } from "react-native";
 import { ThemedText } from "../themed-text";
 import { Spacing, FontWeight } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";

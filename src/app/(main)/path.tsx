@@ -13,6 +13,8 @@ import CO2Button from "@/assets/CO2_icon.svg";
 import ClockButton from "@/assets/Clock.svg";
 import RefreshButton from "@/assets/Refresh_icon.svg";
 
+import { PathFrame } from "@/components/path/path";
+
 import { AnimatedScreen } from "@/components/AnimatedScreen";
 import Map, { MapRef } from "@/leaflet/leaflet";
 import { ThemedText } from "@/components/themed-text";
@@ -106,8 +108,10 @@ export default function PathScreen() {
                     </View>
 
                     <View style={styles.waypointDisplayerBigBox}>
-                        <ScrollView contentContainerStyle={styles.waypointFrame} showsVerticalScrollIndicator={true}>
-                            <ThemedText style={{ color: theme.MainTextBlack }}>{`${Depart}, ${Arrivee}, ${formatParisTime(depDate)} - ${formatParisTime(arrDate)}, ${sameTime}`}</ThemedText>
+                        <ScrollView contentContainerStyle={[styles.waypointFrame, { backgroundColor: theme.MainBackground100 }]} showsVerticalScrollIndicator={true}>
+                            <PathFrame metro={"M7"} />
+                            <PathFrame metro={"M14"} />
+                            <PathFrame metro={"M3bis"} />
                         </ScrollView>
                     </View>
                 </View>
@@ -273,6 +277,11 @@ const styles = StyleSheet.create({
     waypointFrame: {
         display: "flex",
         flexDirection: "column",
-        gap: 10,
+        gap: 15,
+
+        paddingVertical: Spacing.three,
+        paddingHorizontal: Spacing.two,
+
+        borderRadius: 6,
     },
 });
