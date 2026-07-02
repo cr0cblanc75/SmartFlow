@@ -112,7 +112,7 @@ export default function PathScreen() {
                             <PathFrame metro={"M7"} stopStation="Station A" />
                             <PathFrame metro={"M14"} stopStation="Station B" />
                             <PathFrame metro={"M3bis"} stopStation="Station C" isLast={true} />
-                            <ThemedText> {`Dep: ${Depart}, Arr: ${Arrivee}, Dep: ${formatParisTime(depDate)}, Arr: ${formatParisTime(arrDate)}`}</ThemedText>
+                            <ThemedText> {`Dep: ${Depart}, Arr: ${Arrivee}, Dep: ${formatParisTime(depDate)}, Arr: ${formatParisTime(arrDate)}, ${sameTime}`}</ThemedText>
                         </ScrollView>
                     </View>
                 </View>
