@@ -13,6 +13,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 
 import LogoNavbar from "@/assets/Logo-NavBar.svg";
 import ClockButton from "@/assets/Clock.svg";
+import ReturnButton from "@/assets/ReturnButton.svg";
 
 import { AnimatedScreen } from "@/components/AnimatedScreen";
 import Map, { MapRef } from "@/leaflet/leaflet";
@@ -66,6 +67,17 @@ export default function WaypointScreen() {
             <View style={StyleSheet.absoluteFill}>
                 <Map ref={mapRef} />
             </View>
+
+            <Pressable
+                onPress={() => router.push("/(main)/home_map")}
+                style={{
+                    position: "absolute",
+                    top: (contentPlatformStyle?.paddingTop ?? 0) + 15,
+                    left: 20,
+                    zIndex: 999,
+                }}>
+                <ReturnButton height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
+            </Pressable>
 
             {/* GREEN BOX OVERLAY */}
             <AnimatedScreen type="slide-from-bottom" duration={200}>
