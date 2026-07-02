@@ -13,12 +13,13 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 
 import LogoNavbar from "@/assets/Logo-NavBar.svg";
 import ClockButton from "@/assets/Clock.svg";
+import ReturnButton from "@/assets/ReturnButton.svg";
 
 import { AnimatedScreen } from "@/components/AnimatedScreen";
 import Map, { MapRef } from "@/leaflet/leaflet";
 import { ThemedText } from "@/components/themed-text";
 
-export default function HomeScreen() {
+export default function WaypointScreen() {
     const theme = useTheme();
     const router = useRouter();
     const [Depart, setDepart] = useState("");
@@ -66,6 +67,17 @@ export default function HomeScreen() {
             <View style={StyleSheet.absoluteFill}>
                 <Map ref={mapRef} />
             </View>
+
+            <Pressable
+                onPress={() => router.push("/(main)/home_map")}
+                style={{
+                    position: "absolute",
+                    top: (contentPlatformStyle?.paddingTop ?? 0) + 15,
+                    left: 20,
+                    zIndex: 999,
+                }}>
+                <ReturnButton height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
+            </Pressable>
 
             {/* GREEN BOX OVERLAY */}
             <AnimatedScreen type="slide-from-bottom" duration={200}>
@@ -167,7 +179,19 @@ export default function HomeScreen() {
                         </ScrollView>
                     </View>
 
-                    <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={() => console.log({ Depart, Arrivee, timeDep: formatParisTime(timeDep), timeArr: formatParisTime(timeArr), sameTime: formatParisTime(timeArr) === formatParisTime(timeDep) })}>
+                    <Pressable
+                        style={[styles.button, { backgroundColor: theme.ButtonBackground }]}
+                        onPress={() =>
+                            router.push({
+                                pathname: "/(main)/path",
+                                params: {
+                                    Depart,
+                                    Arrivee,
+                                    timeDep: timeDep.toISOString(),
+                                    timeArr: timeArr.toISOString(),
+                                },
+                            })
+                        }>
                         <ThemedText style={[styles.buttonText, { color: theme.MainTextBlack }]}>Go {" >"}</ThemedText>
                     </Pressable>
                 </View>
