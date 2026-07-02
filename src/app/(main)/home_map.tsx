@@ -106,7 +106,7 @@ export default function HomeScreen() {
                     </View>
 
                     <View style={styles.column}>
-                        <Pressable style={styles.button} onPress={() => router.push("/(main)/home_map")}>
+                        <Pressable style={styles.button} onPress={() => router.push("/(profile)/profile_page")}>
                             <ProfileButton width={"100%"} height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextWhite} />
                         </Pressable>
                     </View>

@@ -16,6 +16,7 @@ export default function Layout() {
                 <Stack.Screen name="(main)/home_map" />
                 <Stack.Screen name="(main)/waypoints" />
                 <Stack.Screen name="(main)/path" />
+                <Stack.Screen name="(profile)/profile_page" />
             </Stack>
         </ThemeProvider>
     );
