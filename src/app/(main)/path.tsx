@@ -34,9 +34,9 @@ export default function PathScreen() {
         const res = mainClc({
             graph,
             timetable,
-            fromName: "Châtelet",
-            toName: "Nation",
-            departureTime: "08:30",
+            fromName: "Place Monge",
+            toName: "Poissy",
+            departureTime: "10:30",
         });
     }, []);
 

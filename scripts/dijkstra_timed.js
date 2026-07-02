@@ -972,7 +972,7 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
             if (step.type === "correspondance") {
                 console.log(`  [${displayIndex++}] Correspondance - ${step.from.name} -> ${step.to.name} (${step.duration_formatted})`);
             } else {
-                const ligne = step.route_short_name ? `Ligne ${step.route_short_name}` : step.mode;
+                const ligne = step.route_short_name ? `Direction <${step.route_short_name}>` : step.mode;
 
                 if (step.wait_sec > 0) {
                     console.log(`  [${displayIndex++}] Attente a ${step.from.name} - ${step.wait_formatted}`);
