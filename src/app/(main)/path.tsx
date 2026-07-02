@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 
 import { useLocalSearchParams } from "expo-router";
 
@@ -19,12 +19,17 @@ import { AnimatedScreen } from "@/components/AnimatedScreen";
 import Map, { MapRef } from "@/leaflet/leaflet";
 import { ThemedText } from "@/components/themed-text";
 
+import { addition } from "@/../scripts/server";
+
 export default function PathScreen() {
     const theme = useTheme();
     const router = useRouter();
 
     const ETAco2 = "203,5g";
     const ETAtime = "1h34";
+
+    const res = addition(3, 3);
+    console.log(res);
 
     const formatParisTime = (date: Date) => {
         return date.toLocaleTimeString("fr-FR", {
@@ -109,10 +114,18 @@ export default function PathScreen() {
 
                     <View style={styles.waypointDisplayerBigBox}>
                         <ScrollView contentContainerStyle={[styles.waypointFrame, { backgroundColor: theme.MainBackground100 }]} showsVerticalScrollIndicator={true}>
+                            <View style={styles.recapDestination}>
+                                <ThemedText style={[styles.recapDestinationText, { color: theme.MainTextBlack }]}> {`Dep: ${Depart}`}</ThemedText>
+                                <ThemedText style={[styles.recapDestinationTime, { color: theme.MainTextBlack }]}> {`Dep: ${formatParisTime(depDate)}, ${sameTime}`}</ThemedText>
+                            </View>
+                            <View style={styles.recapDestination}>
+                                <ThemedText style={[styles.recapDestinationText, { color: theme.MainTextBlack }]}> {`Arr: ${Arrivee}`}</ThemedText>
+                                <ThemedText style={[styles.recapDestinationTime, { color: theme.MainTextBlack }]}> {`Arr: ${formatParisTime(arrDate)}, ${sameTime}`}</ThemedText>
+                            </View>
+
                             <PathFrame metro={"M7"} stopStation="Station A" />
                             <PathFrame metro={"M14"} stopStation="Station B" />
                             <PathFrame metro={"M3bis"} stopStation="Station C" isLast={true} />
-                            <ThemedText> {`Dep: ${Depart}, Arr: ${Arrivee}, Dep: ${formatParisTime(depDate)}, Arr: ${formatParisTime(arrDate)}, ${sameTime}`}</ThemedText>
                         </ScrollView>
                     </View>
                 </View>
@@ -239,6 +252,7 @@ const styles = StyleSheet.create({
         gap: 10,
 
         paddingLeft: Spacing.three,
+        paddingRight: Spacing.three,
     },
 
     refreshFrame: {
@@ -263,6 +277,31 @@ const styles = StyleSheet.create({
     },
 
     // ------------------------- Waypoints Box -------------------------
+
+    recapDestination: {
+        flex: 1,
+
+        display: "flex",
+        flexDirection: "row",
+
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+
+        paddingVertical: 2,
+    },
+    recapDestinationText: {
+        fontSize: 14,
+        fontWeight: FontWeight.Medium,
+
+        flexShrink: 1,
+        marginRight: 10,
+    },
+    recapDestinationTime: {
+        fontSize: 14,
+        fontWeight: FontWeight.Bold,
+        textAlign: "right",
+        marginRight: 10,
+    },
 
     waypointDisplayerBigBox: {
         flex: 1,

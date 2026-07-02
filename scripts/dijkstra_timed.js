@@ -166,7 +166,12 @@
  *
  *   node dijkstra_timed.js --fromId STOP_A --toId STOP_B --arrive 09:00
  */
+
+const graph = require("./graph.json");
+const timetable = require("./timetable.json");
+
 // ─── MinHeap ──────────────────────────────────────────────────────────────────
+
 class MinHeap {
     constructor() {
         this.heap = [];
@@ -595,7 +600,7 @@ function dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelc
 }
 
 // ─── findPathTimed ────────────────────────────────────────────────────────────
-function findPathTimed(graph, timetable, fromName, toName, options = {}) {
+export function findPathTimed(graph = graph, timetable = timetable, fromName, toName, options = {}) {
     const { departureTime = "08:00", wheelchair = false } = options;
 
     const nodeMap = {};
@@ -863,7 +868,7 @@ function findPathTimedArrivalByIds(graph, timetable, fromId, toId, options = {})
     return dijkstraTimedReverse(adj, nodeMap, timetable, new Set(fromIds), toIds, arrivalSec, wheelchair);
 }
 
-module.exports = {
+exports = {
     findPathTimed,
     findPathTimedArrival,
     findPathTimedByIds,
@@ -877,6 +882,7 @@ module.exports = {
 };
 
 // ─── CLI ──────────────────────────────────────────────────────────────────────
+/*
 if (require.main === module) {
     const minimist = require("minimist");
     const args = minimist(process.argv.slice(2));
@@ -958,3 +964,4 @@ if (require.main === module) {
         }
     });
 }
+*/
