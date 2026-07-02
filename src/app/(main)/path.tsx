@@ -22,7 +22,6 @@ import { ThemedText } from "@/components/themed-text";
 import { mainClc } from "../../../scripts/dijkstra_timed";
 import graph from "../../../scripts/graph.json";
 import timetable from "../../../scripts/timetable.json";
-import { findPathTimed } from "@/../scripts/test";
 
 export default function PathScreen() {
     const theme = useTheme();
