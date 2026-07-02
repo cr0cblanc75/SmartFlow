@@ -2,16 +2,14 @@ import { useRef, useState } from "react";
 
 import { useLocalSearchParams } from "expo-router";
 
-import { Platform, StyleSheet, View, TextInput, ScrollView } from "react-native";
+import { Platform, StyleSheet, View, ScrollView } from "react-native";
 import { useTheme } from "@/hooks/use-theme";
 import { FontWeight, Spacing } from "@/constants/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Pressable } from "react-native";
 import { useRouter } from "expo-router";
 
-import DateTimePicker from "@react-native-community/datetimepicker";
-
-import LogoNavbar from "@/assets/Logo-NavBar.svg";
+import CO2Button from "@/assets/CO2_icon.svg";
 import ClockButton from "@/assets/Clock.svg";
 import RefreshButton from "@/assets/Refresh_icon.svg";
 
@@ -22,6 +20,9 @@ import { ThemedText } from "@/components/themed-text";
 export default function PathScreen() {
     const theme = useTheme();
     const router = useRouter();
+
+    const ETAco2 = "203,5g";
+    const ETAtime = "1h34";
 
     const formatParisTime = (date: Date) => {
         return date.toLocaleTimeString("fr-FR", {
@@ -75,9 +76,9 @@ export default function PathScreen() {
                             <View style={styles.upperFrame}>
                                 {/* Départ */}
                                 <View style={[styles.secondaryDownFrame, { paddingLeft: Spacing.three, paddingTop: Spacing.two, paddingBottom: Spacing.two }]}>
-                                    <LogoNavbar height={25} preserveAspectRatio="xMidYMid meet" />
+                                    <CO2Button width={25} height={25} preserveAspectRatio="xMidYMid meet" />
                                     <View style={{ flex: 1, minWidth: 0 }}>
-                                        <ThemedText style={[styles.destinationText, { color: theme.MainTextBlack, letterSpacing: 2 }]}>202,5g</ThemedText>
+                                        <ThemedText style={[styles.destinationText, { color: theme.MainTextBlack, letterSpacing: 2 }]}>{ETAco2}</ThemedText>
                                     </View>
                                 </View>
                             </View>
@@ -88,16 +89,18 @@ export default function PathScreen() {
                             <View style={styles.downFrame}>
                                 {/* Arrivée */}
                                 <View style={styles.secondaryDownFrame}>
-                                    <LogoNavbar height={25} preserveAspectRatio="xMidYMid meet" />
+                                    <ClockButton height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
                                     <View style={{ flex: 1, minWidth: 0 }}>
-                                        <ThemedText style={[styles.destinationText, { color: theme.MainTextBlack, fontWeight: FontWeight.SemiBold, letterSpacing: 4 }]}>1h32</ThemedText>
+                                        <ThemedText style={[styles.destinationText, { color: theme.MainTextBlack, fontWeight: FontWeight.SemiBold, letterSpacing: 4 }]}>{ETAtime}</ThemedText>
                                     </View>
                                 </View>
 
                                 {/* REFRESH */}
-                                <View style={[styles.refreshFrame, { borderLeftColor: theme.BackgroundAwardCards }]}>
-                                    <RefreshButton height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
-                                </View>
+                                <Pressable onPress={() => router.push("/(main)/waypoints")}>
+                                    <View style={[styles.refreshFrame, { borderLeftColor: theme.BackgroundAwardCards }]}>
+                                        <RefreshButton height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
+                                    </View>
+                                </Pressable>
                             </View>
                         </View>
                     </View>
