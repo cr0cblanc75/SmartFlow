@@ -167,9 +167,6 @@
  *   node dijkstra_timed.js --fromId STOP_A --toId STOP_B --arrive 09:00
  */
 
-const graph = require("./graph.json");
-const timetable = require("./timetable.json");
-
 // ─── MinHeap ──────────────────────────────────────────────────────────────────
 
 class MinHeap {
@@ -353,9 +350,11 @@ function buildAdjacency(graph) {
     const adj = {};
     for (const node of graph.nodes) adj[node.id] = [];
     for (const edge of graph.edges) {
+        if (!edge) continue;
         if (!adj[edge.from]) adj[edge.from] = [];
         adj[edge.from].push(edge);
     }
+
     return adj;
 }
 // ─── Recherche de chemin (heure de depart ou d'arrivee) ────────────────────────
@@ -868,100 +867,121 @@ function findPathTimedArrivalByIds(graph, timetable, fromId, toId, options = {})
     return dijkstraTimedReverse(adj, nodeMap, timetable, new Set(fromIds), toIds, arrivalSec, wheelchair);
 }
 
-exports = {
-    findPathTimed,
-    findPathTimedArrival,
-    findPathTimedByIds,
-    findPathTimedArrivalByIds,
-    findStopsByName,
-    buildAdjacency,
-    buildUndirectedAdjacency,
-    getConnectedComponents,
-    isConnected,
-    buildNetworkTree,
-};
-
 // ─── CLI ──────────────────────────────────────────────────────────────────────
-/*
-if (require.main === module) {
-    const minimist = require("minimist");
-    const args = minimist(process.argv.slice(2));
-    const [fromName, toName] = args._;
-    const wheelchair = !!args.wheelchair;
-    const departureTime = args.time || null;
-    const arrivalTime = args.arrive || null;
-    const fromId = args.fromId || null;
-    const toId = args.toId || null;
 
+/**
+ * @param {Object} params
+ * @param {any} params.graph
+ * @param {any} params.timetable
+ * @param {string} params.fromName
+ * @param {string} params.toName
+ * @param {string|null} [params.fromId]
+ * @param {string|null} [params.toId]
+ * @param {string|null} [params.departureTime]
+ * @param {string|null} [params.arrivalTime]
+ * @param {boolean} [params.wheelchair]
+ */
+export function mainClc({ graph, timetable, fromName, toName, fromId = null, toId = null, departureTime = null, arrivalTime = null, wheelchair = false, debug = true }) {
     if (!departureTime && !arrivalTime) {
-        console.log('Usage : node dijkstra_timed.js "Depart" "Arrivee" --time HH:MM [--wheelchair]');
-        console.log('        node dijkstra_timed.js "Depart" "Arrivee" --arrive HH:MM [--wheelchair]');
-        console.log("        node dijkstra_timed.js --fromId <id> --toId <id> --time HH:MM   (route sans ambiguite)");
-        console.log('Ex    : node dijkstra_timed.js "Chatelet" "Nation" --time 08:30');
-        console.log('Ex    : node dijkstra_timed.js "Chatelet" "Nation" --arrive 09:00');
-        process.exit(0);
+        throw new Error("Vous devez fournir une heure de départ (departureTime) ou d'arrivée (arrivalTime)");
     }
 
-    console.log("Chargement du graphe...");
-    const graph = require("./graph.json");
-
-    console.log("Chargement des horaires...");
-    const timetable = require("./timetable.json");
-
-    console.log(`${graph.nodes.length} sommets | ${Object.keys(timetable).length} arrets avec horaires\n`);
-
-    const start = Date.now();
+    const start = performance.now();
     let result;
-    try {
-        if (fromId && toId) {
-            // Arrets deja identifies (ex: apres disambiguation via findStopsByName) :
-            // on route directement sur les IDs, sans repasser par la recherche par nom.
-            if (arrivalTime) {
-                console.log(`Recherche : "${fromId}" -> "${toId}" arriver avant ${arrivalTime}\n`);
-                result = findPathTimedArrivalByIds(graph, timetable, fromId, toId, { arrivalTime, wheelchair });
+
+    if (fromId && toId) {
+        if (arrivalTime) {
+            result = findPathTimedArrivalByIds(graph, timetable, fromId, toId, {
+                arrivalTime,
+                wheelchair,
+            });
+        } else {
+            result = findPathTimedByIds(graph, timetable, fromId, toId, {
+                departureTime,
+                wheelchair,
+            });
+        }
+    } else if (arrivalTime) {
+        result = findPathTimed(graph, timetable, fromName, toName, {
+            arrivalTime,
+            wheelchair,
+        });
+    } else {
+        result = findPathTimed(graph, timetable, fromName, toName, {
+            departureTime,
+            wheelchair,
+        });
+    }
+
+    const elapsed = Math.round(performance.now() - start);
+
+    if (!result) return null;
+
+    const formatted = {
+        elapsed,
+        from: result.from.name,
+        to: result.to.name,
+        departureTime: result.departure_time,
+        arrivalTime: result.arrival_time,
+        totalDuration: result.total_duration_formatted,
+        nbCorrespondances: result.nb_correspondances,
+        nbStops: result.nb_stops,
+        steps: result.steps.map((step) => {
+            if (step.type === "correspondance") {
+                return {
+                    type: "correspondance",
+                    from: step.from.name,
+                    to: step.to.name,
+                    duration: step.duration_formatted,
+                };
+            }
+
+            return {
+                type: "transport",
+                line: step.route_short_name || null,
+                mode: step.mode,
+                from: step.from.name,
+                to: step.to.name,
+                departure: step.departure_time,
+                wait: step.wait_formatted,
+                waitSec: step.wait_sec,
+                travel: formatDuration(step.travel_sec),
+                travelSec: step.travel_sec,
+                nbStops: step.nb_stops,
+            };
+        }),
+    };
+
+    // ─────────────────────────────────────────────
+    // 🖨️ PRINT MODE (optionnel)
+    // ─────────────────────────────────────────────
+    if (debug) {
+        console.log(`------------------------------------------------------ Chemin trouve en ${elapsed}ms\n`);
+
+        console.log(`${result.from.name} -> ${result.to.name}`);
+        console.log(`Depart          : ${result.departure_time}`);
+        console.log(`Arrivee estimee : ${result.arrival_time}`);
+        console.log(`Duree totale    : ${result.total_duration_formatted}`);
+        console.log(`Correspondances : ${result.nb_correspondances}`);
+        console.log(`Nombre d'arrets : ${result.nb_stops}`);
+        console.log("\nDetail du trajet :\n");
+
+        let displayIndex = 1;
+
+        result.steps.forEach((step) => {
+            if (step.type === "correspondance") {
+                console.log(`  [${displayIndex++}] Correspondance - ${step.from.name} -> ${step.to.name} (${step.duration_formatted})`);
             } else {
-                console.log(`Recherche : "${fromId}" -> "${toId}" a ${departureTime}\n`);
-                result = findPathTimedByIds(graph, timetable, fromId, toId, { departureTime, wheelchair });
+                const ligne = step.route_short_name ? `Ligne ${step.route_short_name}` : step.mode;
+
+                if (step.wait_sec > 0) {
+                    console.log(`  [${displayIndex++}] Attente a ${step.from.name} - ${step.wait_formatted}`);
+                }
+
+                console.log(`  [${displayIndex++}] ${ligne} (${step.mode}) - ${step.from.name} -> ${step.to.name} - ${step.nb_stops} arret(s) - Depart ${step.departure_time} - Trajet ${formatDuration(step.travel_sec)}`);
             }
-        } else if (arrivalTime) {
-            console.log(`Recherche : "${fromName}" -> "${toName}" arriver avant ${arrivalTime}\n`);
-            result = findPathTimedArrival(graph, timetable, fromName, toName, { arrivalTime, wheelchair });
-        } else {
-            console.log(`Recherche : "${fromName}" -> "${toName}" a ${departureTime}\n`);
-            result = findPathTimed(graph, timetable, fromName, toName, { departureTime, wheelchair });
-        }
-    } catch (err) {
-        console.error("Erreur :", err.message);
-        process.exit(1);
+        });
     }
 
-    const elapsed = Date.now() - start;
-
-    if (!result) {
-        console.log("Aucun chemin trouve.");
-        process.exit(0);
-    }
-
-    console.log(`Chemin trouve en ${elapsed}ms\n`);
-    console.log(`${result.from.name} -> ${result.to.name}`);
-    console.log(`Depart          : ${result.departure_time}`);
-    console.log(`Arrivee estimee : ${result.arrival_time}`);
-    console.log(`Duree totale    : ${result.total_duration_formatted}`);
-    console.log(`Correspondances : ${result.nb_correspondances}`);
-    console.log(`Nombre d'arrets : ${result.nb_stops}`);
-    console.log("\nDetail du trajet :\n");
-
-    let displayIndex = 1;
-    result.steps.forEach((step) => {
-        if (step.type === "correspondance") {
-            console.log(`  [${displayIndex++}] Correspondance - ${step.from.name} -> ${step.to.name} (${step.duration_formatted})`);
-        } else {
-            const ligne = step.route_short_name ? `Ligne ${step.route_short_name}` : step.mode;
-            if (step.wait_sec > 0) {
-                console.log(`  [${displayIndex++}] Attente a ${step.from.name} - ${step.wait_formatted}`);
-            }
-            console.log(`  [${displayIndex++}] ${ligne} (${step.mode}) - ${step.from.name} -> ${step.to.name} - ${step.nb_stops} arret(s) - Depart ${step.departure_time} - Trajet ${formatDuration(step.travel_sec)}`);
-        }
-    });
+    return formatted;
 }
-*/

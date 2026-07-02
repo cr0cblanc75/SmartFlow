@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 
 import { useLocalSearchParams } from "expo-router";
 
@@ -19,7 +19,10 @@ import { AnimatedScreen } from "@/components/AnimatedScreen";
 import Map, { MapRef } from "@/leaflet/leaflet";
 import { ThemedText } from "@/components/themed-text";
 
-import { addition } from "@/../scripts/server";
+import { mainClc } from "../../../scripts/dijkstra_timed";
+import graph from "../../../scripts/graph.json";
+import timetable from "../../../scripts/timetable.json";
+import { findPathTimed } from "@/../scripts/test";
 
 export default function PathScreen() {
     const theme = useTheme();
@@ -28,8 +31,15 @@ export default function PathScreen() {
     const ETAco2 = "203,5g";
     const ETAtime = "1h34";
 
-    const res = addition(3, 3);
-    console.log(res);
+    useEffect(() => {
+        const res = mainClc({
+            graph,
+            timetable,
+            fromName: "Châtelet",
+            toName: "Nation",
+            departureTime: "08:30",
+        });
+    }, []);
 
     const formatParisTime = (date: Date) => {
         return date.toLocaleTimeString("fr-FR", {
