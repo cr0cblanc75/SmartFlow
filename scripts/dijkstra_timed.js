@@ -1,25 +1,171 @@
 /**
- * Dijkstra avec horaires reels
- * ----------------------------
- * Combine graph.json (structure + poids) et timetable.json (horaires de depart)
- * Poids reel d'une arete = temps d'attente du prochain vehicule + poids graph.json
+ * Dijkstra avec horaires réels
+ * ============================
  *
- * Recherche par nom : findStopsByName tolere les fautes de frappe (marge d'erreur,
- * distance de Levenshtein) mais ne melange jamais les paliers de precision entre eux
- * (exact > commence par > contient > approximatif), pour ne pas confondre deux arrets.
- * Une fois un arret precis choisi (par ID), utiliser findPathTimedByIds /
- * findPathTimedArrivalByIds pour router sans repasser par la recherche par nom.
+ * Calcule l'itinéraire le plus rapide dans un réseau de transport à partir :
+ *   - d'un graphe orienté (graph.json)
+ *   - d'un fichier d'horaires (timetable.json)
  *
- * Usage direct :
+ * Le coût réel d'une arête est calculé dynamiquement :
+ *
+ *      temps d'attente du prochain véhicule
+ *    + temps de trajet (edge.weight)
+ *
+ * Les correspondances ("transfer") sont parcourues immédiatement sans attente.
+ *
+ * ---------------------------------------------------------------------------
+ * Dépendances
+ * ---------------------------------------------------------------------------
+ *
+ * Ce module nécessite :
+ *
+ *   - graph.json
+ *       Structure du réseau :
+ *         - nodes
+ *         - edges
+ *         - informations des lignes
+ *
+ *   - timetable.json
+ *       Horaires GTFS déjà convertis en secondes.
+ *       Format :
+ *         timetable[stopId][routeId] = [departure1, departure2, ...]
+ *
+ *   - minimist
+ *       Utilisé uniquement par le mode CLI.
+ *
+ * Installation :
+ *
+ *      npm install minimist
+ *
+ * ---------------------------------------------------------------------------
+ * Recherche d'arrêts
+ * ---------------------------------------------------------------------------
+ *
+ * findStopsByName() recherche un arrêt par nom avec plusieurs niveaux
+ * de précision :
+ *
+ *   1. correspondance exacte
+ *   2. commence par
+ *   3. contient
+ *   4. recherche approximative (distance de Levenshtein)
+ *
+ * Les niveaux ne sont jamais mélangés afin d'éviter qu'une recherche
+ * approximative remplace un résultat exact.
+ *
+ * Une fois l'arrêt choisi (ID connu), il est recommandé d'utiliser les
+ * fonctions "...ByIds" afin d'éviter toute ambiguïté.
+ *
+ * ---------------------------------------------------------------------------
+ * Fonctions principales
+ * ---------------------------------------------------------------------------
+ *
+ * ► Recherche à partir d'une heure de départ
+ *
+ *      findPathTimed(...)
+ *
+ * ► Recherche à partir d'une heure d'arrivée
+ *
+ *      findPathTimedArrival(...)
+ *
+ * ► Même recherche avec IDs déjà résolus
+ *
+ *      findPathTimedByIds(...)
+ *      findPathTimedArrivalByIds(...)
+ *
+ * ► Recherche d'arrêts
+ *
+ *      findStopsByName(...)
+ *
+ * ► Outils réseau
+ *
+ *      buildAdjacency(...)
+ *      buildUndirectedAdjacency(...)
+ *      getConnectedComponents(...)
+ *      isConnected(...)
+ *      buildNetworkTree(...)
+ *
+ * ---------------------------------------------------------------------------
+ * Exemples (module)
+ * ---------------------------------------------------------------------------
+ *
+ * const {
+ *   findPathTimed,
+ *   findPathTimedArrival,
+ *   findPathTimedByIds,
+ *   findPathTimedArrivalByIds,
+ *   findStopsByName
+ * } = require("./dijkstra_timed");
+ *
+ * // Départ à 08:30
+ * const result = findPathTimed(
+ *   graph,
+ *   timetable,
+ *   "Châtelet",
+ *   "Nation",
+ *   {
+ *     departureTime: "08:30"
+ *   }
+ * );
+ *
+ * // Arriver avant 09:00
+ * const result = findPathTimedArrival(
+ *   graph,
+ *   timetable,
+ *   "Châtelet",
+ *   "Nation",
+ *   {
+ *     arrivalTime: "09:00"
+ *   }
+ * );
+ *
+ * // Version PMR
+ * const result = findPathTimed(
+ *   graph,
+ *   timetable,
+ *   "Châtelet",
+ *   "Nation",
+ *   {
+ *     departureTime: "08:30",
+ *     wheelchair: true
+ *   }
+ * );
+ *
+ * // Recherche d'arrêt
+ * const stops = findStopsByName(graph.nodes, "Chatelet");
+ *
+ * // Une fois les IDs connus
+ * const result = findPathTimedByIds(
+ *   graph,
+ *   timetable,
+ *   stops[0].id,
+ *   destinationId,
+ *   {
+ *     departureTime: "08:30"
+ *   }
+ * );
+ *
+ * ---------------------------------------------------------------------------
+ * Utilisation CLI
+ * ---------------------------------------------------------------------------
+ *
+ * Départ à une heure donnée :
+ *
  *   node dijkstra_timed.js "Chatelet" "Nation" --time 08:30
- *   node dijkstra_timed.js "Chatelet" "Nation" --time 08:30 --wheelchair
- *   node dijkstra_timed.js --fromId <id> --toId <id> --time 08:30
  *
- * Usage en module :
- *   const { findPathTimed, findPathTimedByIds, findStopsByName } = require('./dijkstra_timed');
- *   const result = findPathTimed(graph, timetable, "Chatelet", "Nation", { departureTime: "08:30" });
+ * Arriver avant une heure :
+ *
+ *   node dijkstra_timed.js "Chatelet" "Nation" --arrive 09:00
+ *
+ * Version PMR :
+ *
+ *   node dijkstra_timed.js "Chatelet" "Nation" --time 08:30 --wheelchair
+ *
+ * Routage sans ambiguïté (IDs déjà connus) :
+ *
+ *   node dijkstra_timed.js --fromId STOP_A --toId STOP_B --time 08:30
+ *
+ *   node dijkstra_timed.js --fromId STOP_A --toId STOP_B --arrive 09:00
  */
-
 // ─── MinHeap ──────────────────────────────────────────────────────────────────
 class MinHeap {
     constructor() {
