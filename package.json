@@ -20,6 +20,8 @@
     "expo-system-ui": "~56.0.5",
     "expo-web-browser": "~56.0.5",
     "leaflet": "^1.9.4",
+    "minimist": "^1.2.8",
+
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.85.3",
