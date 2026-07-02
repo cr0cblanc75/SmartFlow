@@ -94,33 +94,37 @@ export default function WaypointScreen() {
                                         <TextInput style={[styles.destinationText, { color: theme.MainTextBlack }]} multiline={false} placeholder="Départ" placeholderTextColor={theme.TextBlackOpa60} value={Depart} onChangeText={(val) => setDepart(val)} />
                                     </View>
                                 </View>
-                                {/* CLOCK */}
-                                <View style={[styles.clockFrame, { borderLeftColor: theme.BackgroundAwardCards }]}>
-                                    <ClockButton height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
-                                </View>
-                                {/* HOUR OVERLAY*/}
-                                <View style={{ paddingRight: Spacing.three }}>
-                                    {/* Heure */}
-                                    <Pressable onPress={() => setShowDep(true)}>
-                                        <ThemedText style={{ width: 40, textAlign: "center" }}>
-                                            {timeDep.getHours().toString().padStart(2, "0")}:{timeDep.getMinutes().toString().padStart(2, "0")}
-                                        </ThemedText>
-                                    </Pressable>
 
-                                    {/* overlay hour-picker */}
-                                    {showDep && (
-                                        <DateTimePicker
-                                            value={timeDep}
-                                            mode="time"
-                                            display="spinner"
-                                            onChange={(event, selectedDate) => {
-                                                if (event.type === "set" && selectedDate) {
-                                                    setTimeDep(selectedDate);
-                                                }
-                                                setShowDep(false);
-                                            }}
-                                        />
-                                    )}
+                                {/* HEURE INPUT - Upper */}
+                                <View style={[styles.hourInputFrame, { borderLeftColor: theme.BackgroundAwardCards }]}>
+                                    {/* CLOCK */}
+                                    <View style={styles.clockFrame}>
+                                        <ClockButton height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
+                                    </View>
+                                    {/* HOUR OVERLAY*/}
+                                    <View>
+                                        {/* Heure */}
+                                        <Pressable onPress={() => setShowDep(true)}>
+                                            <ThemedText style={{ textAlign: "center" }}>
+                                                {timeDep.getHours().toString().padStart(2, "0")}:{timeDep.getMinutes().toString().padStart(2, "0")}
+                                            </ThemedText>
+                                        </Pressable>
+
+                                        {/* overlay hour-picker */}
+                                        {showDep && (
+                                            <DateTimePicker
+                                                value={timeDep}
+                                                mode="time"
+                                                display="spinner"
+                                                onChange={(event, selectedDate) => {
+                                                    if (event.type === "set" && selectedDate) {
+                                                        setTimeDep(selectedDate);
+                                                    }
+                                                    setShowDep(false);
+                                                }}
+                                            />
+                                        )}
+                                    </View>
                                 </View>
                             </View>
                         </View>
@@ -136,32 +140,35 @@ export default function WaypointScreen() {
                                     </View>
                                 </View>
 
-                                {/* CLOCK */}
-                                <View style={[styles.clockFrame, { borderLeftColor: theme.BackgroundAwardCards }]}>
-                                    <ClockButton height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
-                                </View>
-                                {/* HOUR OVERLAY*/}
-                                <View style={{ paddingRight: Spacing.three }}>
-                                    {/* Heure */}
-                                    <Pressable onPress={() => setShowArr(true)}>
-                                        <ThemedText style={{ width: 40, textAlign: "center" }}>{arrGiven === false ? "- - : - -" : `${timeArr.getHours().toString().padStart(2, "0")}:${timeArr.getMinutes().toString().padStart(2, "0")}`} </ThemedText>
-                                    </Pressable>
+                                {/* HEURE INPUT - Bottom */}
+                                <View style={[styles.hourInputFrame, { borderLeftColor: theme.BackgroundAwardCards }]}>
+                                    {/* CLOCK */}
+                                    <View style={[styles.clockFrame, { borderLeftColor: theme.BackgroundAwardCards }]}>
+                                        <ClockButton height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
+                                    </View>
+                                    {/* HOUR OVERLAY*/}
+                                    <View>
+                                        {/* Heure */}
+                                        <Pressable onPress={() => setShowArr(true)}>
+                                            <ThemedText style={{ textAlign: "center" }}>{arrGiven === false ? "- - : - -" : `${timeArr.getHours().toString().padStart(2, "0")}:${timeArr.getMinutes().toString().padStart(2, "0")}`} </ThemedText>
+                                        </Pressable>
 
-                                    {/* overlay hour-picker */}
-                                    {showArr && (
-                                        <DateTimePicker
-                                            value={timeArr}
-                                            mode="time"
-                                            display="spinner"
-                                            onChange={(event, selectedDate) => {
-                                                if (event.type === "set" && selectedDate) {
-                                                    setTimeArr(selectedDate);
-                                                    setArrGiven(true);
-                                                }
-                                                setShowArr(false);
-                                            }}
-                                        />
-                                    )}
+                                        {/* overlay hour-picker */}
+                                        {showArr && (
+                                            <DateTimePicker
+                                                value={timeArr}
+                                                mode="time"
+                                                display="spinner"
+                                                onChange={(event, selectedDate) => {
+                                                    if (event.type === "set" && selectedDate) {
+                                                        setTimeArr(selectedDate);
+                                                        setArrGiven(true);
+                                                    }
+                                                    setShowArr(false);
+                                                }}
+                                            />
+                                        )}
+                                    </View>
                                 </View>
                             </View>
                         </View>
@@ -251,6 +258,16 @@ const styles = StyleSheet.create({
         elevation: 6,
     },
 
+    hourInputFrame: {
+        display: "flex",
+        flexDirection: "row",
+        gap: 10,
+        justifyContent: "flex-start",
+        alignItems: "center",
+        paddingHorizontal: Spacing.three,
+        borderLeftWidth: 1,
+    },
+
     // -------- Upper Layer --------
 
     upperframeDestinationDisplayer: {
@@ -321,13 +338,10 @@ const styles = StyleSheet.create({
     },
 
     clockFrame: {
-        paddingLeft: Spacing.three,
         paddingTop: Spacing.two,
         paddingBottom: Spacing.two,
 
         justifyContent: "center",
-
-        borderLeftWidth: 1,
     },
 
     // -------- Inpufield Text --------
