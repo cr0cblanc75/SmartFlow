@@ -166,7 +166,9 @@
  *
  *   node dijkstra_timed.js --fromId STOP_A --toId STOP_B --arrive 09:00
  */
+
 // ─── MinHeap ──────────────────────────────────────────────────────────────────
+
 class MinHeap {
     constructor() {
         this.heap = [];
@@ -213,62 +215,6 @@ class MinHeap {
             i = smallest;
         }
     }
-}
-
-const { calculerEmpreinteTroncon, calculerDistanceParTemps, FE_REFERENCE_SALE_G_PAR_KM } = require("./eco_calculator");
-
-const SMARTFLOW_DEFAULT_ALPHA = 0.5;
-const SMARTFLOW_DEFAULT_BETA = 0.5;
-const TEMPS_MAX_COURONNE_MIN = 90; // minutes
-// Part de temps toujours prise en compte, meme a alpha = 0. Sans ce plancher, un
-// beta = 1 pur rend les troncons ferres quasi gratuits (cout ~ 0) et Dijkstra n'a
-// plus aucun signal pour preferer un trajet direct a un trajet qui boucle sur le
-// reseau : c'est ce qui produisait les itineraires de 50 km / 2h10 absurdes.
-const MIN_TEMPS_WEIGHT = 0.05;
-const MAX_TRANSFER_SEC = 30 * 60; // 30 minutes
-// Toutes les etiquettes de mode representant un troncon pietonnier / une
-// correspondance dans le graphe. "transfer" reste la valeur canonique utilisee
-// en interne (buildSteps, etc.) ; les autres sont des synonymes toleres cote
-// donnees. AVANT ce fix, seul "transfer" etait reconnu partout dans le fichier :
-// une arete etiquetee "walk"/"correspondance"/"foot" echappait au plafond de
-// MAX_TRANSFER_SEC et etait facturee comme un trajet en bus par erreur.
-const WALK_MODES = new Set(["transfer", "walk", "correspondance", "foot"]);
-
-function isWalkMode(mode) {
-    return WALK_MODES.has(mode);
-}
-
-function computeSmartflowEdgeCost(edge, nodeA, nodeB, waitSec, travelSec, alpha = SMARTFLOW_DEFAULT_ALPHA, beta = SMARTFLOW_DEFAULT_BETA) {
-    if (isWalkMode(edge.mode) && travelSec > MAX_TRANSFER_SEC) {
-        return Infinity;
-    }
-
-    const totalSec = waitSec + travelSec;
-    const tempsMinutes = totalSec / 60;
-    const tempsCost = tempsMinutes / TEMPS_MAX_COURONNE_MIN;
-
-    // co2Cost est un RATIO de propretee du mode (emission du mode / emission
-    // d'un bus de reference), pas des grammes bruts divises par un plafond
-    // arbitraire. Avantages :
-    //  - il est independant de la distance de l'arete (train sur 1 km ou
-    //    50 km : meme ratio ~0.03), donc pas d'effet de seuil lie a la taille
-    //    des troncons du graphe ;
-    //  - il reste dans la meme plage de grandeur que tempsCost (~0 a ~1 par
-    //    arete), donc alpha et beta ont un effet vraiment progressif sur tout
-    //    l'intervalle [0, 1] au lieu de saturer des beta = 0.3-0.5 ;
-    //  - la distance influe quand meme sur le cout total via tempsCost
-    //    (un troncon plus long prend aussi plus de temps).
-    let co2Cost = 0;
-    if (nodeA && nodeB && !isWalkMode(edge.mode)) {
-        const eco = calculerEmpreinteTroncon(nodeA, nodeB, edge.mode);
-        const feTotal = eco.details.feExploitation + eco.details.feFabrication;
-        co2Cost = feTotal / FE_REFERENCE_SALE_G_PAR_KM;
-    }
-
-    const effectiveAlpha = Math.max(alpha, MIN_TEMPS_WEIGHT);
-    const cost = (effectiveAlpha * tempsCost) + (beta * co2Cost);
-
-    return Math.max(0, cost);
 }
 
 // ─── Normalisation ────────────────────────────────────────────────────────────
@@ -371,11 +317,12 @@ function timeToSeconds(t) {
 
 // ─── Formatage ────────────────────────────────────────────────────────────────
 function formatDuration(seconds) {
-    const totalMinutes = Math.max(0, Math.round(seconds / 60));
-    const h = Math.floor(totalMinutes / 60);
-    const m = totalMinutes % 60;
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
     if (h > 0) return `${h}h ${m}min`;
-    return `${m}min`;
+    if (m > 0) return `${m}min ${s}s`;
+    return `${s}s`;
 }
 
 function formatTime(seconds) {
@@ -403,9 +350,11 @@ function buildAdjacency(graph) {
     const adj = {};
     for (const node of graph.nodes) adj[node.id] = [];
     for (const edge of graph.edges) {
+        if (!edge) continue;
         if (!adj[edge.from]) adj[edge.from] = [];
         adj[edge.from].push(edge);
     }
+
     return adj;
 }
 // ─── Recherche de chemin (heure de depart ou d'arrivee) ────────────────────────
@@ -509,7 +458,7 @@ function buildSteps(pathNodes, nodeMap) {
         if (!current || current.route_id !== hop.route_id || current.mode !== hop.mode) {
             if (current) steps.push(current);
             current = {
-                type: isWalkMode(hop.mode) ? "correspondance" : "trajet",
+                type: hop.mode === "transfer" ? "correspondance" : "trajet",
                 mode: hop.mode,
                 route_id: hop.route_id || null,
                 route_short_name: hop.route_short_name || null,
@@ -541,41 +490,8 @@ function buildSteps(pathNodes, nodeMap) {
     }));
 }
 
-function calculateEcoMetricsForSteps(steps, nodeMap) {
-    let totalCo2 = 0;
-    let totalDistance = 0;
-
-    for (const step of steps) {
-        const fromNode = nodeMap[step.from.id];
-        const toNode = nodeMap[step.to.id];
-
-        if (isWalkMode(step.mode)) {
-            const distanceKm = calculerDistanceParTemps(step.travel_sec || 0);
-            step.distance_km = Number(distanceKm.toFixed(3));
-            step.co2_grams = 0;
-            step.co2_details = { mode: "transfer", reason: "piéton / correspondance" };
-            totalDistance += step.distance_km;
-        } else {
-            const eco = calculerEmpreinteTroncon(fromNode, toNode, step.mode);
-            step.distance_km = Number(eco.distanceKm.toFixed(3));
-            step.co2_grams = Number(eco.co2Grams.toFixed(2));
-            step.co2_details = eco.details;
-            totalDistance += step.distance_km;
-            totalCo2 += step.co2_grams;
-        }
-
-        if (!Number.isFinite(step.distance_km)) step.distance_km = 0;
-        if (!Number.isFinite(step.co2_grams)) step.co2_grams = 0;
-    }
-
-    return {
-        total_co2_grams: Number(totalCo2.toFixed(2)),
-        total_distance_km: Number(totalDistance.toFixed(3)),
-    };
-}
-
 // ─── Dijkstra timed multi-source ──────────────────────────────────────────────
-function dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelchair, alpha = SMARTFLOW_DEFAULT_ALPHA, beta = SMARTFLOW_DEFAULT_BETA) {
+function dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelchair) {
     const dist = {};
     const prev = {};
     const visited = new Set();
@@ -587,13 +503,13 @@ function dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelc
     for (const id of fromIds) {
         if (wheelchair && nodeMap[id]?.wheelchair === false) continue;
         dist[id] = startSec;
-        heap.push({ cost: startSec, id, currentSec: startSec, walkStreakSec: 0 });
+        heap.push({ cost: startSec, id, currentSec: startSec });
     }
 
     let bestToId = null;
 
     while (heap.size > 0) {
-        const { cost, id, currentSec, walkStreakSec } = heap.pop();
+        const { cost, id, currentSec } = heap.pop();
 
         if (visited.has(id)) continue;
         visited.add(id);
@@ -609,10 +525,9 @@ function dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelc
 
             let waitSec = 0;
             let boardSec = currentSec;
-            const edgeIsWalk = isWalkMode(edge.mode);
 
             // Pour les trajets en vehicule, on cherche le prochain depart
-            if (!edgeIsWalk) {
+            if (edge.mode !== "transfer") {
                 const stopTimes = timetable[id];
                 const routeDeps = stopTimes ? stopTimes[edge.route_id] : null;
                 const nextDep = nextDeparture(routeDeps, currentSec);
@@ -624,19 +539,9 @@ function dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelc
                 boardSec = nextDep;
             }
 
-            // Une "correspondance" peut etre representee par plusieurs aretes
-            // "transfer" consecutives dans le graphe. Le plafond de 30 min doit
-            // s'appliquer a la marche cumulee depuis la derniere montee en
-            // vehicule, pas a chaque arete individuellement : sinon une chaine
-            // de petites aretes marchables (chacune < 30 min) peut representer
-            // plusieurs heures de marche sans jamais etre rejetee.
-            const newWalkStreak = edgeIsWalk ? walkStreakSec + edge.weight : 0;
-            if (edgeIsWalk && newWalkStreak > MAX_TRANSFER_SEC) continue;
-
             const travelSec = edge.weight;
             const arrivalAtNext = boardSec + travelSec;
-            const costEdge = computeSmartflowEdgeCost(edge, nodeMap[id], nodeMap[edge.to], waitSec, travelSec, alpha, beta);
-            const newCost = cost + costEdge;
+            const newCost = arrivalAtNext;
 
             if (newCost < dist[edge.to]) {
                 dist[edge.to] = newCost;
@@ -654,7 +559,7 @@ function dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelc
                     },
                     currentSec: arrivalAtNext,
                 };
-                heap.push({ cost: newCost, id: edge.to, currentSec: arrivalAtNext, walkStreakSec: newWalkStreak });
+                heap.push({ cost: newCost, id: edge.to, currentSec: arrivalAtNext });
             }
         }
     }
@@ -675,20 +580,16 @@ function dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelc
     }
 
     const steps = buildSteps(pathNodes, nodeMap);
-    const arrivalSec = pathNodes[pathNodes.length - 1].currentSec;
-    const totalDuration = arrivalSec - startSec;
+    const totalDuration = dist[bestToId] - startSec;
     const nbCorrespondances = steps.filter((s) => s.type === "correspondance").length;
-    const ecoMetrics = calculateEcoMetricsForSteps(steps, nodeMap);
 
     return {
         from: nodeMap[current],
         to: nodeMap[bestToId],
         departure_time: formatTime(startSec),
-        arrival_time: formatTime(arrivalSec),
+        arrival_time: formatTime(dist[bestToId]),
         total_duration: totalDuration,
         total_duration_formatted: formatDuration(totalDuration),
-        total_distance_km: ecoMetrics.total_distance_km,
-        total_co2_grams: ecoMetrics.total_co2_grams,
         nb_stops: pathNodes.length - 1,
         nb_correspondances: nbCorrespondances,
         wheelchair_accessible: wheelchair,
@@ -698,8 +599,8 @@ function dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelc
 }
 
 // ─── findPathTimed ────────────────────────────────────────────────────────────
-function findPathTimed(graph, timetable, fromName, toName, options = {}) {
-    const { departureTime = "08:00", wheelchair = false, alpha = SMARTFLOW_DEFAULT_ALPHA, beta = SMARTFLOW_DEFAULT_BETA } = options;
+export function findPathTimed(graph = graph, timetable = timetable, fromName, toName, options = {}) {
+    const { departureTime = "08:00", wheelchair = false } = options;
 
     const nodeMap = {};
     for (const node of graph.nodes) nodeMap[node.id] = node;
@@ -724,7 +625,7 @@ function findPathTimed(graph, timetable, fromName, toName, options = {}) {
     console.log(`Heure   : ${departureTime}\n`);
 
     const adj = buildAdjacency(graph);
-    return dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelchair, alpha, beta);
+    return dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelchair);
 }
 
 // ─── findPathTimedByIds ────────────────────────────────────────────────────────
@@ -734,7 +635,7 @@ function findPathTimed(graph, timetable, fromName, toName, options = {}) {
 // fromId/toId acceptent un seul ID ou un tableau d'IDs (ex: plusieurs quais
 // d'une meme station deja identifiee).
 function findPathTimedByIds(graph, timetable, fromId, toId, options = {}) {
-    const { departureTime = "08:00", wheelchair = false, alpha = SMARTFLOW_DEFAULT_ALPHA, beta = SMARTFLOW_DEFAULT_BETA } = options;
+    const { departureTime = "08:00", wheelchair = false } = options;
 
     const nodeMap = {};
     for (const node of graph.nodes) nodeMap[node.id] = node;
@@ -751,7 +652,7 @@ function findPathTimedByIds(graph, timetable, fromId, toId, options = {}) {
 
     const startSec = timeToSeconds(departureTime);
     const adj = buildAdjacency(graph);
-    return dijkstraTimed(adj, nodeMap, timetable, fromIds, new Set(toIds), startSec, wheelchair, alpha, beta);
+    return dijkstraTimed(adj, nodeMap, timetable, fromIds, new Set(toIds), startSec, wheelchair);
 }
 
 // ─── Exports ──────────────────────────────────────────────────────────────────
@@ -769,7 +670,7 @@ function lastDeparture(departures, beforeSec) {
 }
 
 // ─── Dijkstra inverse (heure d'arrivee souhaitee) ─────────────────────────────
-function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSec, wheelchair, alpha = SMARTFLOW_DEFAULT_ALPHA, beta = SMARTFLOW_DEFAULT_BETA) {
+function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSec, wheelchair) {
     // Construction du graphe inverse : to -> from
     const adjReverse = {};
     for (const id of Object.keys(nodeMap)) adjReverse[id] = [];
@@ -780,34 +681,25 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
         }
     }
 
-    // dist[id] = cout minimal cumule (alpha*temps + beta*CO2) connu pour rallier
-    // ce noeud jusqu'a l'arrivee, en respectant l'heure d'arrivee souhaitee.
-    // AVANT ce fix, dist[id] stockait l'heure de depart maximale et le heap
-    // ordonnait uniquement par heure : alpha/beta n'etaient jamais consultes,
-    // donc une recherche par heure d'arrivee ignorait totalement le CO2.
+    // dist[id] = heure de depart maximale connue pour arriver a temps
     const dist = {};
-    // boardTimeAt[id] = heure de depart (en secondes) associee au meilleur cout
-    // connu pour ce noeud. Separee de dist[] maintenant que dist[] porte un cout
-    // et non plus une heure (necessaire pour la reconstruction et l'affichage).
-    const boardTimeAt = {};
     const prev = {};
     const visited = new Set();
 
-    for (const id of Object.keys(nodeMap)) dist[id] = Infinity;
+    for (const id of Object.keys(nodeMap)) dist[id] = -Infinity;
 
-    const heap = new MinHeap();
+    const heap = new MinHeap(); // on utilise -heure pour simuler un MaxHeap
 
     for (const id of toIds) {
         if (wheelchair && nodeMap[id]?.wheelchair === false) continue;
-        dist[id] = 0;
-        boardTimeAt[id] = arrivalSec;
-        heap.push({ cost: 0, id, currentSec: arrivalSec, walkStreakSec: 0 });
+        dist[id] = arrivalSec;
+        heap.push({ cost: -arrivalSec, id, currentSec: arrivalSec });
     }
 
     let bestFromId = null;
 
     while (heap.size > 0) {
-        const { cost, id, currentSec, walkStreakSec } = heap.pop();
+        const { cost, id, currentSec } = heap.pop();
 
         if (visited.has(id)) continue;
         visited.add(id);
@@ -822,9 +714,8 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
             if (wheelchair && nodeMap[edge.to]?.wheelchair === false) continue;
 
             let boardSec;
-            const edgeIsWalk = isWalkMode(edge.mode);
 
-            if (!edgeIsWalk) {
+            if (edge.mode !== "transfer") {
                 // On cherche le dernier depart depuis edge.to qui permet d'arriver a temps
                 const stopTimes = timetable[edge.to];
                 const routeDeps = stopTimes ? stopTimes[edge.route_id] : null;
@@ -841,21 +732,8 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
                 if (boardSec < 0) continue;
             }
 
-            // Meme logique que dans dijkstraTimed : plafonner la marche cumulee,
-            // pas arete par arete (voir commentaire equivalent plus haut).
-            const newWalkStreak = edgeIsWalk ? walkStreakSec + edge.weight : 0;
-            if (edgeIsWalk && newWalkStreak > MAX_TRANSFER_SEC) continue;
-
-            const travelSec = edge.weight;
-            // nodeMap[edge.to] / nodeMap[id] : edge a deja ete retourne (from/to
-            // inverses) lors de la construction d'adjReverse, donc "edge.to" ici
-            // designe bien le point de depart reel du troncon et "id" son arrivee.
-            const edgeCost = computeSmartflowEdgeCost(edge, nodeMap[edge.to], nodeMap[id], 0, travelSec, alpha, beta);
-            const newCost = cost + edgeCost;
-
-            if (newCost < dist[edge.to]) {
-                dist[edge.to] = newCost;
-                boardTimeAt[edge.to] = boardSec;
+            if (boardSec > dist[edge.to]) {
+                dist[edge.to] = boardSec;
                 prev[edge.to] = {
                     nodeId: id,
                     hop: {
@@ -866,11 +744,11 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
                         text_color: edge.text_color,
                         boardingSec: boardSec,
                         waitSec: 0,
-                        travelSec,
+                        travelSec: edge.weight,
                     },
                     currentSec: boardSec,
                 };
-                heap.push({ cost: newCost, id: edge.to, currentSec: boardSec, walkStreakSec: newWalkStreak });
+                heap.push({ cost: -boardSec, id: edge.to, currentSec: boardSec });
             }
         }
     }
@@ -884,7 +762,7 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
     let cur = bestFromId;
     while (prev[cur]) {
         const { nodeId, hop, currentSec } = prev[cur];
-        rawPath.push({ id: cur, currentSec: boardTimeAt[cur], hop });
+        rawPath.push({ id: cur, currentSec: dist[cur], hop });
         cur = nodeId;
     }
     rawPath.push({ id: cur, currentSec: arrivalSec, hop: null });
@@ -899,25 +777,22 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
     // Calcul des temps d'attente
     for (let i = 0; i < pathNodes.length - 1; i++) {
         const hop = pathNodes[i].hopToNext;
-        if (hop && !isWalkMode(hop.mode)) {
+        if (hop && hop.mode !== "transfer") {
             hop.waitSec = Math.max(0, hop.boardingSec - pathNodes[i].currentSec);
         }
     }
 
     const steps = buildSteps(pathNodes, nodeMap);
-    const totalDuration = arrivalSec - boardTimeAt[bestFromId];
+    const totalDuration = arrivalSec - dist[bestFromId];
     const nbCorrespondances = steps.filter((s) => s.type === "correspondance").length;
-    const ecoMetrics = calculateEcoMetricsForSteps(steps, nodeMap);
 
     return {
         from: nodeMap[pathNodes[0].id],
         to: nodeMap[pathNodes[pathNodes.length - 1].id],
-        departure_time: formatTime(boardTimeAt[bestFromId]),
+        departure_time: formatTime(dist[bestFromId]),
         arrival_time: formatTime(arrivalSec),
         total_duration: totalDuration,
         total_duration_formatted: formatDuration(totalDuration),
-        total_distance_km: ecoMetrics.total_distance_km,
-        total_co2_grams: ecoMetrics.total_co2_grams,
         nb_stops: pathNodes.length - 1,
         nb_correspondances: nbCorrespondances,
         wheelchair_accessible: wheelchair,
@@ -940,7 +815,7 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
  *   @param {boolean} options.wheelchair
  */
 function findPathTimedArrival(graph, timetable, fromName, toName, options = {}) {
-    const { arrivalTime = "09:00", wheelchair = false, alpha = SMARTFLOW_DEFAULT_ALPHA, beta = SMARTFLOW_DEFAULT_BETA } = options;
+    const { arrivalTime = "09:00", wheelchair = false } = options;
 
     const nodeMap = {};
     for (const node of graph.nodes) nodeMap[node.id] = node;
@@ -965,14 +840,14 @@ function findPathTimedArrival(graph, timetable, fromName, toName, options = {}) 
     console.log(`Arriver avant : ${arrivalTime}\n`);
 
     const adj = buildAdjacency(graph);
-    return dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSec, wheelchair, alpha, beta);
+    return dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSec, wheelchair);
 }
 
 // ─── findPathTimedArrivalByIds ─────────────────────────────────────────────────
 // Equivalent de findPathTimedArrival mais sur des IDs deja resolus, pour router
 // sans ambiguite une fois l'arret precis choisi.
 function findPathTimedArrivalByIds(graph, timetable, fromId, toId, options = {}) {
-    const { arrivalTime = "09:00", wheelchair = false, alpha = SMARTFLOW_DEFAULT_ALPHA, beta = SMARTFLOW_DEFAULT_BETA } = options;
+    const { arrivalTime = "09:00", wheelchair = false } = options;
 
     const nodeMap = {};
     for (const node of graph.nodes) nodeMap[node.id] = node;
@@ -989,105 +864,124 @@ function findPathTimedArrivalByIds(graph, timetable, fromId, toId, options = {})
 
     const arrivalSec = timeToSeconds(arrivalTime);
     const adj = buildAdjacency(graph);
-    return dijkstraTimedReverse(adj, nodeMap, timetable, new Set(fromIds), toIds, arrivalSec, wheelchair, alpha, beta);
+    return dijkstraTimedReverse(adj, nodeMap, timetable, new Set(fromIds), toIds, arrivalSec, wheelchair);
 }
 
-module.exports = {
-    findPathTimed,
-    findPathTimedArrival,
-    findPathTimedByIds,
-    findPathTimedArrivalByIds,
-    findStopsByName,
-    buildAdjacency,
-    buildUndirectedAdjacency,
-    getConnectedComponents,
-    isConnected,
-    buildNetworkTree,
-};
-
 // ─── CLI ──────────────────────────────────────────────────────────────────────
-if (require.main === module) {
-    const minimist = require("minimist");
-    const args = minimist(process.argv.slice(2));
-    const [fromName, toName] = args._;
-    const wheelchair = !!args.wheelchair;
-    const departureTime = args.time || null;
-    const arrivalTime = args.arrive || null;
-    const alpha = typeof args.alpha !== "undefined" ? Number(args.alpha) : SMARTFLOW_DEFAULT_ALPHA;
-    const beta = typeof args.beta !== "undefined" ? Number(args.beta) : SMARTFLOW_DEFAULT_BETA;
-    const fromId = args.fromId || null;
-    const toId = args.toId || null;
 
+/**
+ * @param {Object} params
+ * @param {any} params.graph
+ * @param {any} params.timetable
+ * @param {string} params.fromName
+ * @param {string} params.toName
+ * @param {string|null} [params.fromId]
+ * @param {string|null} [params.toId]
+ * @param {string|null} [params.departureTime]
+ * @param {string|null} [params.arrivalTime]
+ * @param {boolean} [params.wheelchair]
+ */
+export function mainClc({ graph, timetable, fromName, toName, fromId = null, toId = null, departureTime = null, arrivalTime = null, wheelchair = false, debug = true }) {
     if (!departureTime && !arrivalTime) {
-        console.log('Usage : node dijkstra_timed.js "Depart" "Arrivee" --time HH:MM [--wheelchair] [--alpha 0.5] [--beta 0.5]');
-        console.log('        node dijkstra_timed.js "Depart" "Arrivee" --arrive HH:MM [--wheelchair] [--alpha 0.5] [--beta 0.5]');
-        console.log("        node dijkstra_timed.js --fromId <id> --toId <id> --time HH:MM [--alpha 0.5] [--beta 0.5]   (route sans ambiguite)");
-        console.log('Ex    : node dijkstra_timed.js "Chatelet" "Nation" --time 08:30 --alpha 0.5 --beta 0.5');
-        console.log('Ex    : node dijkstra_timed.js "Chatelet" "Nation" --arrive 09:00 --alpha 0.2 --beta 0.8');
-        process.exit(0);
+        throw new Error("Vous devez fournir une heure de départ (departureTime) ou d'arrivée (arrivalTime)");
     }
 
-    console.log("Chargement du graphe...");
-    const graph = require("./graph.json");
-
-    console.log("Chargement des horaires...");
-    const timetable = require("./timetable.json");
-
-    console.log(`${graph.nodes.length} sommets | ${Object.keys(timetable).length} arrets avec horaires\n`);
-
-    const start = Date.now();
+    const start = performance.now();
     let result;
-    try {
-        if (fromId && toId) {
-            // Arrets deja identifies (ex: apres disambiguation via findStopsByName) :
-            // on route directement sur les IDs, sans repasser par la recherche par nom.
-            if (arrivalTime) {
-                console.log(`Recherche : "${fromId}" -> "${toId}" arriver avant ${arrivalTime}\n`);
-                result = findPathTimedArrivalByIds(graph, timetable, fromId, toId, { arrivalTime, wheelchair, alpha, beta });
+
+    if (fromId && toId) {
+        if (arrivalTime) {
+            result = findPathTimedArrivalByIds(graph, timetable, fromId, toId, {
+                arrivalTime,
+                wheelchair,
+            });
+        } else {
+            result = findPathTimedByIds(graph, timetable, fromId, toId, {
+                departureTime,
+                wheelchair,
+            });
+        }
+    } else if (arrivalTime) {
+        result = findPathTimed(graph, timetable, fromName, toName, {
+            arrivalTime,
+            wheelchair,
+        });
+    } else {
+        result = findPathTimed(graph, timetable, fromName, toName, {
+            departureTime,
+            wheelchair,
+        });
+    }
+
+    const elapsed = Math.round(performance.now() - start);
+
+    if (!result) return null;
+
+    const formatted = {
+        elapsed,
+        from: result.from.name,
+        to: result.to.name,
+        departureTime: result.departure_time,
+        arrivalTime: result.arrival_time,
+        totalDuration: result.total_duration_formatted,
+        nbCorrespondances: result.nb_correspondances,
+        nbStops: result.nb_stops,
+        steps: result.steps.map((step) => {
+            if (step.type === "correspondance") {
+                return {
+                    type: "correspondance",
+                    from: step.from.name,
+                    to: step.to.name,
+                    duration: step.duration_formatted,
+                };
+            }
+
+            return {
+                type: "transport",
+                line: step.route_short_name || null,
+                mode: step.mode,
+                from: step.from.name,
+                to: step.to.name,
+                departure: step.departure_time,
+                wait: step.wait_formatted,
+                waitSec: step.wait_sec,
+                travel: formatDuration(step.travel_sec),
+                travelSec: step.travel_sec,
+                nbStops: step.nb_stops,
+            };
+        }),
+    };
+
+    // ─────────────────────────────────────────────
+    // PRINT MODE (optionnel)
+    // ─────────────────────────────────────────────
+    if (debug) {
+        console.log(`------------------------------------------------------ Chemin trouve en ${elapsed}ms\n`);
+
+        console.log(`${result.from.name} -> ${result.to.name}`);
+        console.log(`Depart          : ${result.departure_time}`);
+        console.log(`Arrivee estimee : ${result.arrival_time}`);
+        console.log(`Duree totale    : ${result.total_duration_formatted}`);
+        console.log(`Correspondances : ${result.nb_correspondances}`);
+        console.log(`Nombre d'arrets : ${result.nb_stops}`);
+        console.log("\nDetail du trajet :\n");
+
+        let displayIndex = 1;
+
+        result.steps.forEach((step) => {
+            if (step.type === "correspondance") {
+                console.log(`  [${displayIndex++}] Correspondance - ${step.from.name} -> ${step.to.name} (${step.duration_formatted})`);
             } else {
-                console.log(`Recherche : "${fromId}" -> "${toId}" a ${departureTime}\n`);
-                result = findPathTimedByIds(graph, timetable, fromId, toId, { departureTime, wheelchair, alpha, beta });
+                const ligne = step.route_short_name ? `Direction <${step.route_short_name}>` : step.mode;
+
+                if (step.wait_sec > 0) {
+                    console.log(`  [${displayIndex++}] Attente a ${step.from.name} - ${step.wait_formatted}`);
+                }
+
+                console.log(`  [${displayIndex++}] ${ligne} (${step.mode}) - ${step.from.name} -> ${step.to.name} - ${step.nb_stops} arret(s) - Depart ${step.departure_time} - Trajet ${formatDuration(step.travel_sec)}`);
             }
-        } else if (arrivalTime) {
-            console.log(`Recherche : "${fromName}" -> "${toName}" arriver avant ${arrivalTime}\n`);
-            result = findPathTimedArrival(graph, timetable, fromName, toName, { arrivalTime, wheelchair, alpha, beta });
-        } else {
-            console.log(`Recherche : "${fromName}" -> "${toName}" a ${departureTime}\n`);
-            result = findPathTimed(graph, timetable, fromName, toName, { departureTime, wheelchair, alpha, beta });
-        }
-    } catch (err) {
-        console.error("Erreur :", err.message);
-        process.exit(1);
+        });
     }
 
-    const elapsed = Date.now() - start;
-
-    if (!result) {
-        console.log("Aucun chemin trouve.");
-        process.exit(0);
-    }
-
-    console.log(`Chemin trouve en ${elapsed}ms\n`);
-    console.log(`${result.from.name} -> ${result.to.name}`);
-    console.log(`Depart          : ${result.departure_time}`);
-    console.log(`Arrivee estimee : ${result.arrival_time}`);
-    console.log(`Duree totale    : ${result.total_duration_formatted}`);
-    console.log(`Distance totale : ${result.total_distance_km.toFixed(3)} km`);
-    console.log(`Empreinte CO2   : ${result.total_co2_grams.toFixed(2)} g`);
-    console.log(`Correspondances : ${result.nb_correspondances}`);
-    console.log(`Nombre d'arrets : ${result.nb_stops}`);
-    console.log("\nDetail du trajet :\n");
-
-    let displayIndex = 1;
-    result.steps.forEach((step) => {
-        if (step.type === "correspondance") {
-            console.log(`  [${displayIndex++}] Correspondance - ${step.from.name} -> ${step.to.name} (${step.duration_formatted})`);
-        } else {
-            const ligne = step.route_short_name ? `Ligne ${step.route_short_name}` : step.mode;
-            if (step.wait_sec > 0) {
-                console.log(`  [${displayIndex++}] Attente a ${step.from.name} - ${step.wait_formatted}`);
-            }
-            console.log(`  [${displayIndex++}] ${ligne} (${step.mode}) - ${step.from.name} -> ${step.to.name} - ${step.nb_stops} arret(s) - Depart ${step.departure_time} - Trajet ${formatDuration(step.travel_sec)}`);
-        }
-    });
+    return formatted;
 }
