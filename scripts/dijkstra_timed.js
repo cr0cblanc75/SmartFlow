@@ -200,6 +200,20 @@ function buildAdjacency(graph) {
   }
   return adj;
 }
+// ─── Recherche de chemin (heure de depart ou d'arrivee) ────────────────────────
+function findPathFinal(graph, timetable, fromName, toName, options = {}) {
+  const { departureTime = null, arrivalTime = null, wheelchair = false } = options;
+
+  if (departureTime) {
+    return findPathTimed(graph, timetable, fromName, toName, { departureTime, wheelchair });
+  }
+
+  if (arrivalTime) {
+    return findPathTimedArrival(graph, timetable, fromName, toName, { arrivalTime, wheelchair });
+  }
+
+  throw new Error("Veuillez renseigner au moins une heure de depart ou d'arrivee.");
+}
 
 // ─── Analyse du reseau (independant des horaires) ─────────────────────────────
 function buildUndirectedAdjacency(graph) {
