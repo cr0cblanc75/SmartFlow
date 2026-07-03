@@ -221,7 +221,7 @@ const { calculerEmpreinteTroncon, calculerDistanceParTemps, FE_REFERENCE_SALE_G_
 
 const SMARTFLOW_DEFAULT_ALPHA = 0.5;
 const SMARTFLOW_DEFAULT_BETA = 0.5;
-const TEMPS_MAX_COURONNE_MIN = 90; 
+const TEMPS_MAX_COURONNE_MIN = 90;
 // Part de temps toujours prise en compte, meme a alpha = 0. Sans ce plancher, un
 // beta = 1 pur rend les troncons ferres quasi gratuits (cout ~ 0) et Dijkstra n'a
 // plus aucun signal pour preferer un trajet direct a un trajet qui boucle sur le
@@ -268,7 +268,7 @@ function computeSmartflowEdgeCost(edge, nodeA, nodeB, waitSec, travelSec, alpha 
     }
 
     const effectiveAlpha = Math.max(alpha, MIN_TEMPS_WEIGHT);
-    const cost = (effectiveAlpha * tempsCost) + (beta * co2Cost);
+    const cost = effectiveAlpha * tempsCost + beta * co2Cost;
 
     return Math.max(0, cost);
 }
@@ -713,9 +713,11 @@ export function findPathTimed(graph = graph, timetable = timetable, fromName, to
     const toIds = new Set(toCandidates.map((s) => s.id));
     const startSec = timeToSeconds(departureTime);
 
+    /*
     console.log(`Depart  : ${fromCandidates.length} arret(s) pour "${fromName}"`);
     console.log(`Arrivee : ${toCandidates.length} arret(s) pour "${toName}"`);
     console.log(`Heure   : ${departureTime}\n`);
+    */
 
     const adj = buildAdjacency(graph);
     return dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelchair);
@@ -793,9 +795,7 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
     const labelKey = (id, currentSec) => id + "::" + currentSec;
 
     function isDominated(candidate, existing) {
-        return existing.some(
-            (l) => l.cost <= candidate.cost && l.currentSec >= candidate.currentSec && (l.cost < candidate.cost || l.currentSec > candidate.currentSec)
-        );
+        return existing.some((l) => l.cost <= candidate.cost && l.currentSec >= candidate.currentSec && (l.cost < candidate.cost || l.currentSec > candidate.currentSec));
     }
 
     function tryAddLabel(id, candidate) {

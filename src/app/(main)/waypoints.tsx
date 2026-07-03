@@ -33,14 +33,6 @@ export default function WaypointScreen() {
 
     const mapRef = useRef<MapRef>(null);
 
-    const formatParisTime = (date: Date) => {
-        return date.toLocaleTimeString("fr-FR", {
-            timeZone: "Europe/Paris",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    };
-
     // Récupération des insets de sécurité pour gérer les marges et le padding -> (doit être sur chaque page)
     const safeAreaInsets = useSafeAreaInsets();
     const insets = {

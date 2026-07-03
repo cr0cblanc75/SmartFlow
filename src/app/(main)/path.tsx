@@ -38,20 +38,42 @@ type PathResult = {
 export default function PathScreen() {
     const theme = useTheme();
     const router = useRouter();
+    const { Depart, Arrivee, timeDep, timeArr } = useLocalSearchParams<{
+        Depart: string;
+        Arrivee: string;
+        timeDep: string;
+        timeArr?: string;
+    }>();
 
     const [pathFinded, setPathFinded] = useState<PathResult | any>(null);
+    const [TimeDepString, setTimeDepString] = useState("...");
+    const [TimeArrString, setTimeArrString] = useState("...");
 
     useEffect(() => {
+        if (!Depart || !Arrivee || !timeDep) return;
+
+        const formatedTimeDep = formatParisTime(new Date(timeDep as string));
+        const formatedTimeArr = timeArr ? formatParisTime(new Date(timeArr as string)) : formatedTimeDep;
+
+        setTimeDepString(formatedTimeDep);
+
         const res = mainClc({
             graph,
             timetable,
-            fromName: "Place Monge",
-            toName: "Poissy",
-            departureTime: "10:30",
+            fromName: Depart,
+            toName: Arrivee,
+            departureTime: formatedTimeDep,
+            arrivalTime: formatedTimeDep === formatedTimeArr ? null : formatedTimeArr,
         });
 
+        console.log(">>>> NEW RESULT >>>>");
+        res?.steps.forEach((step, index) => {
+            console.log(`[${index}]`, step);
+        });
+
+        setTimeArrString(res?.arrivalTime?.slice(0, 5) ?? "...");
         setPathFinded(res);
-    }, []);
+    }, [Depart, Arrivee, timeDep, timeArr]);
 
     const formatParisTime = (date: Date) => {
         return date.toLocaleTimeString("fr-FR", {
@@ -60,11 +82,6 @@ export default function PathScreen() {
             minute: "2-digit",
         });
     };
-
-    const { Depart, Arrivee, timeDep, timeArr } = useLocalSearchParams();
-    const depDate = new Date(timeDep as string);
-    const arrDate = new Date(timeArr as string);
-    const sameTime = formatParisTime(depDate) === formatParisTime(arrDate);
 
     const ETAco2 = "203,5g";
     const ETAtime = pathFinded?.totalDuration ?? "chargement ...";
@@ -139,13 +156,23 @@ export default function PathScreen() {
 
                     <View style={styles.waypointDisplayerBigBox}>
                         <ScrollView contentContainerStyle={[styles.waypointFrame, { backgroundColor: theme.MainBackground100 }]} showsVerticalScrollIndicator={true}>
-                            <View style={styles.recapDestination}>
-                                <ThemedText style={[styles.recapDestinationText, { color: theme.MainTextBlack }]}> {`Dep: ${Depart}`}</ThemedText>
-                                <ThemedText style={[styles.recapDestinationTime, { color: theme.MainTextBlack }]}> {`Dep: ${formatParisTime(depDate)}, ${sameTime}`}</ThemedText>
-                            </View>
-                            <View style={styles.recapDestination}>
-                                <ThemedText style={[styles.recapDestinationText, { color: theme.MainTextBlack }]}> {`Arr: ${Arrivee}`}</ThemedText>
-                                <ThemedText style={[styles.recapDestinationTime, { color: theme.MainTextBlack }]}> {`Arr: ${formatParisTime(arrDate)}, ${sameTime}`}</ThemedText>
+                            <View style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                                <View style={styles.recapDestinationTop}>
+                                    <ThemedText style={[styles.recapDestinationText, { color: theme.MainTextBlack }]}>de </ThemedText>
+                                    <ThemedText style={[styles.recapDestinationTime, { color: theme.MainTextBlack }]}>{Depart}</ThemedText>
+                                    <ThemedText style={[styles.recapDestinationText, { color: theme.MainTextBlack }]}> à </ThemedText>
+                                    <ThemedText style={[styles.recapDestinationTime, { color: theme.MainTextBlack }]}>{Arrivee}</ThemedText>
+                                </View>
+                                <View style={styles.recapDestinationBottom}>
+                                    <View style={{ display: "flex", flexDirection: "row" }}>
+                                        <ThemedText style={[styles.recapDestinationText, { color: theme.MainTextBlack }]}>Départ </ThemedText>
+                                        <ThemedText style={[styles.recapDestinationTime, { color: theme.MainTextBlack }]}> {TimeDepString}</ThemedText>
+                                    </View>
+                                    <View style={{ display: "flex", flexDirection: "row" }}>
+                                        <ThemedText style={[styles.recapDestinationText, { color: theme.MainTextBlack }]}> Arrivé à</ThemedText>
+                                        <ThemedText style={[styles.recapDestinationTime, { color: theme.MainTextBlack }]}> {TimeArrString}</ThemedText>
+                                    </View>
+                                </View>
                             </View>
 
                             <PathFrame metro={"M7"} stopStation="Station A" />
@@ -303,7 +330,17 @@ const styles = StyleSheet.create({
 
     // ------------------------- Waypoints Box -------------------------
 
-    recapDestination: {
+    recapDestinationTop: {
+        flex: 1,
+
+        display: "flex",
+        flexDirection: "row",
+
+        justifyContent: "center",
+        alignItems: "flex-start",
+    },
+
+    recapDestinationBottom: {
         flex: 1,
 
         display: "flex",
@@ -311,21 +348,21 @@ const styles = StyleSheet.create({
 
         justifyContent: "space-between",
         alignItems: "flex-start",
-
-        paddingVertical: 2,
     },
+
     recapDestinationText: {
         fontSize: 14,
         fontWeight: FontWeight.Medium,
 
         flexShrink: 1,
-        marginRight: 10,
     },
+
     recapDestinationTime: {
         fontSize: 14,
         fontWeight: FontWeight.Bold,
-        textAlign: "right",
-        marginRight: 10,
+        textAlign: "left",
+
+        textTransform: "uppercase",
     },
 
     waypointDisplayerBigBox: {
