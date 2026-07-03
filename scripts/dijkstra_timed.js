@@ -974,8 +974,8 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
  * @param {string} fromName
  * @param {string} toName
  * @param {Object} options
- *   @param {string}  options.arrivalTime  - heure d'arrivee souhaitee (HH:MM)
- *   @param {boolean} options.wheelchair
+ * @param {string}  options.arrivalTime  - heure d'arrivee souhaitee (HH:MM)
+ * @param {boolean} options.wheelchair
  */
 function findPathTimedArrival(graph, timetable, fromName, toName, options = {}) {
     const { arrivalTime = "09:00", wheelchair = false } = options;
