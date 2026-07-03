@@ -219,7 +219,7 @@ const { calculerEmpreinteTroncon, calculerDistanceParTemps, FE_REFERENCE_SALE_G_
 
 const SMARTFLOW_DEFAULT_ALPHA = 0.5;
 const SMARTFLOW_DEFAULT_BETA = 0.5;
-const TEMPS_MAX_COURONNE_MIN = 90; // minutes
+const TEMPS_MAX_COURONNE_MIN = 90; 
 // Part de temps toujours prise en compte, meme a alpha = 0. Sans ce plancher, un
 // beta = 1 pur rend les troncons ferres quasi gratuits (cout ~ 0) et Dijkstra n'a
 // plus aucun signal pour preferer un trajet direct a un trajet qui boucle sur le
@@ -541,6 +541,10 @@ function buildSteps(pathNodes, nodeMap) {
     }));
 }
 
+// Calcule la distance et l'empreinte CO2 totales d'un trajet deja construit
+// (liste d'etapes), en completant chaque etape avec son detail CO2. Les
+// troncons pietons (isWalkMode) n'emettent pas de CO2 mais comptent quand
+// meme dans la distance totale, estimee a partir du temps de marche.
 function calculateEcoMetricsForSteps(steps, nodeMap) {
     let totalCo2 = 0;
     let totalDistance = 0;
@@ -780,40 +784,70 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
         }
     }
 
-    // dist[id] = cout minimal cumule (alpha*temps + beta*CO2) connu pour rallier
-    // ce noeud jusqu'a l'arrivee, en respectant l'heure d'arrivee souhaitee.
-    // AVANT ce fix, dist[id] stockait l'heure de depart maximale et le heap
-    // ordonnait uniquement par heure : alpha/beta n'etaient jamais consultes,
-    // donc une recherche par heure d'arrivee ignorait totalement le CO2.
-    const dist = {};
-    // boardTimeAt[id] = heure de depart (en secondes) associee au meilleur cout
-    // connu pour ce noeud. Separee de dist[] maintenant que dist[] porte un cout
-    // et non plus une heure (necessaire pour la reconstruction et l'affichage).
-    const boardTimeAt = {};
-    const prev = {};
-    const visited = new Set();
+    // ── Recherche multi-labels (front de Pareto cout / marge horaire) ─────────
+    // AVANT ce fix, chaque noeud ne gardait qu'UN seul etat : le meilleur cout,
+    // systematiquement associe au tout dernier depart compatible sur chaque
+    // arete. Cela pouvait ecarter un chemin partant un peu plus tot mais
+    // debouchant, plus en amont, sur une bien meilleure correspondance (temps
+    // ou CO2) — la recherche par heure d'arrivee avait donc structurellement
+    // moins de marge d'exploration que la recherche par heure de depart.
+    // On garde maintenant, par noeud, plusieurs etats non domines : un etat A
+    // domine un etat B si A est a la fois moins cher ET a une contrainte
+    // horaire au moins aussi souple (A.cost <= B.cost et A.currentSec >=
+    // B.currentSec, avec au moins une inegalite stricte).
+    const MAX_LABELS_PER_NODE = 4; // borne pour rester praticable sur ~36k sommets
+    const labels = {}; // id -> [{ cost, currentSec }] non domines
+    const prevOf = {}; // "id::currentSec" -> { parentKey, hop }
+    const settled = new Set();
 
-    for (const id of Object.keys(nodeMap)) dist[id] = Infinity;
+    const labelKey = (id, currentSec) => id + "::" + currentSec;
+
+    function isDominated(candidate, existing) {
+        return existing.some(
+            (l) => l.cost <= candidate.cost && l.currentSec >= candidate.currentSec && (l.cost < candidate.cost || l.currentSec > candidate.currentSec)
+        );
+    }
+
+    function tryAddLabel(id, candidate) {
+        const existing = labels[id] || (labels[id] = []);
+        if (isDominated(candidate, existing)) return false;
+        for (let i = existing.length - 1; i >= 0; i--) {
+            const l = existing[i];
+            if (candidate.cost <= l.cost && candidate.currentSec >= l.currentSec && (candidate.cost < l.cost || candidate.currentSec > l.currentSec)) {
+                existing.splice(i, 1);
+            }
+        }
+        existing.push(candidate);
+        if (existing.length > MAX_LABELS_PER_NODE) {
+            existing.sort((a, b) => a.cost - b.cost);
+            existing.length = MAX_LABELS_PER_NODE;
+        }
+        return true;
+    }
 
     const heap = new MinHeap();
 
     for (const id of toIds) {
         if (wheelchair && nodeMap[id]?.wheelchair === false) continue;
-        dist[id] = 0;
-        boardTimeAt[id] = arrivalSec;
+        tryAddLabel(id, { cost: 0, currentSec: arrivalSec });
         heap.push({ cost: 0, id, currentSec: arrivalSec, walkStreakSec: 0 });
     }
 
-    let bestFromId = null;
+    let bestFromKey = null;
 
     while (heap.size > 0) {
         const { cost, id, currentSec, walkStreakSec } = heap.pop();
+        const key = labelKey(id, currentSec);
 
-        if (visited.has(id)) continue;
-        visited.add(id);
+        if (settled.has(key)) continue;
+        // L'etat peut avoir ete evince (domine) par un meilleur label depuis
+        // son ajout au tas : suppression paresseuse, on l'ignore simplement.
+        const stillValid = (labels[id] || []).some((l) => l.currentSec === currentSec && l.cost === cost);
+        if (!stillValid) continue;
+        settled.add(key);
 
         if (fromIds.has(id)) {
-            bestFromId = id;
+            bestFromKey = key;
             break;
         }
 
@@ -852,12 +886,11 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
             // designe bien le point de depart reel du troncon et "id" son arrivee.
             const edgeCost = computeSmartflowEdgeCost(edge, nodeMap[edge.to], nodeMap[id], 0, travelSec, alpha, beta);
             const newCost = cost + edgeCost;
+            const candidate = { cost: newCost, currentSec: boardSec };
 
-            if (newCost < dist[edge.to]) {
-                dist[edge.to] = newCost;
-                boardTimeAt[edge.to] = boardSec;
-                prev[edge.to] = {
-                    nodeId: id,
+            if (tryAddLabel(edge.to, candidate)) {
+                prevOf[labelKey(edge.to, boardSec)] = {
+                    parentKey: key,
                     hop: {
                         mode: edge.mode,
                         route_id: edge.route_id,
@@ -868,26 +901,31 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
                         waitSec: 0,
                         travelSec,
                     },
-                    currentSec: boardSec,
                 };
                 heap.push({ cost: newCost, id: edge.to, currentSec: boardSec, walkStreakSec: newWalkStreak });
             }
         }
     }
 
-    if (!bestFromId) return null;
+    if (!bestFromKey) return null;
 
-    // Dans le Dijkstra inversé, prev[A] = { nodeId: B } signifie qu'on va de A vers B
-    // On reconstruit la chaine depuis bestFromId jusqu'a un noeud destination
-    // en suivant prev dans l'ordre normal (depart -> arrivee)
+    // Reconstruction du chemin en remontant la chaine de labels (depart -> arrivee)
     const rawPath = []; // [ { id, currentSec, hop } ]
-    let cur = bestFromId;
-    while (prev[cur]) {
-        const { nodeId, hop, currentSec } = prev[cur];
-        rawPath.push({ id: cur, currentSec: boardTimeAt[cur], hop });
-        cur = nodeId;
+    let curKey = bestFromKey;
+    while (prevOf[curKey]) {
+        const sepIdx = curKey.lastIndexOf("::");
+        const curId = curKey.slice(0, sepIdx);
+        const curSec = Number(curKey.slice(sepIdx + 2));
+        const { parentKey, hop } = prevOf[curKey];
+        rawPath.push({ id: curId, currentSec: curSec, hop });
+        curKey = parentKey;
     }
-    rawPath.push({ id: cur, currentSec: arrivalSec, hop: null });
+    {
+        const sepIdx = curKey.lastIndexOf("::");
+        const curId = curKey.slice(0, sepIdx);
+        const curSec = Number(curKey.slice(sepIdx + 2));
+        rawPath.push({ id: curId, currentSec: curSec, hop: null });
+    }
 
     // rawPath est dans le bon sens : depart en premier, arrivee en dernier
     const pathNodes = rawPath.map((n, i) => ({
@@ -896,7 +934,20 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
         hopToNext: i < rawPath.length - 1 ? rawPath[i].hop : null,
     }));
 
-    // Calcul des temps d'attente
+    // Calcul des heures d'arrivee reelles et des temps d'attente.
+    // Le "currentSec" issu du label est une heure de DEPART (le moment ou il
+    // faut partir pour tenir la correspondance suivante) — ce n'est PAS
+    // l'heure d'ARRIVEE reelle a ce noeud, ces deux temps peuvent differer
+    // (c'est precisement l'attente). On recalcule ici la vraie heure d'arrivee
+    // a chaque noeud intermediaire a partir du hop precedent (boardingSec +
+    // travelSec), avant de calculer le temps d'attente du hop suivant.
+    for (let i = 1; i < pathNodes.length; i++) {
+        const prevHop = pathNodes[i - 1].hopToNext;
+        if (prevHop) {
+            pathNodes[i].currentSec = prevHop.boardingSec + prevHop.travelSec;
+        }
+    }
+
     for (let i = 0; i < pathNodes.length - 1; i++) {
         const hop = pathNodes[i].hopToNext;
         if (hop && !isWalkMode(hop.mode)) {
@@ -905,14 +956,15 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
     }
 
     const steps = buildSteps(pathNodes, nodeMap);
-    const totalDuration = arrivalSec - boardTimeAt[bestFromId];
+    const departSec = pathNodes[0].currentSec;
+    const totalDuration = arrivalSec - departSec;
     const nbCorrespondances = steps.filter((s) => s.type === "correspondance").length;
     const ecoMetrics = calculateEcoMetricsForSteps(steps, nodeMap);
 
     return {
         from: nodeMap[pathNodes[0].id],
         to: nodeMap[pathNodes[pathNodes.length - 1].id],
-        departure_time: formatTime(boardTimeAt[bestFromId]),
+        departure_time: formatTime(departSec),
         arrival_time: formatTime(arrivalSec),
         total_duration: totalDuration,
         total_duration_formatted: formatDuration(totalDuration),
