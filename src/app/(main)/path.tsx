@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 
 import { useLocalSearchParams } from "expo-router";
 
@@ -23,12 +23,23 @@ import { mainClc } from "../../../scripts/dijkstra_timed";
 import graph from "../../../scripts/graph.json";
 import timetable from "../../../scripts/timetable.json";
 
+type PathResult = {
+    elapsed: number;
+    from: string;
+    to: string;
+    departureTime: string;
+    arrivalTime: string;
+    totalDuration: string;
+    nbCorrespondances: number;
+    nbStops: number;
+    steps: any[];
+};
+
 export default function PathScreen() {
     const theme = useTheme();
     const router = useRouter();
 
-    const ETAco2 = "203,5g";
-    const ETAtime = "1h34";
+    const [pathFinded, setPathFinded] = useState<PathResult | any>(null);
 
     useEffect(() => {
         const res = mainClc({
@@ -38,6 +49,8 @@ export default function PathScreen() {
             toName: "Poissy",
             departureTime: "10:30",
         });
+
+        setPathFinded(res);
     }, []);
 
     const formatParisTime = (date: Date) => {
@@ -52,6 +65,9 @@ export default function PathScreen() {
     const depDate = new Date(timeDep as string);
     const arrDate = new Date(timeArr as string);
     const sameTime = formatParisTime(depDate) === formatParisTime(arrDate);
+
+    const ETAco2 = "203,5g";
+    const ETAtime = pathFinded?.totalDuration ?? "chargement ...";
 
     const mapRef = useRef<MapRef>(null);
 
