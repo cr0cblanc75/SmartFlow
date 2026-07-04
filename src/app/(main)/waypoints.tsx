@@ -31,6 +31,44 @@ export default function WaypointScreen() {
     const [timeArr, setTimeArr] = useState(new Date());
     const [showArr, setShowArr] = useState(false);
 
+    const [departHasError, setDepartHasError] = useState(false);
+    const [arriveeHasError, setArriveeHasError] = useState(false);
+    const [timeHasError, setTimeHasError] = useState(false);
+
+    // Message d'erreur pour pt de départ et d'arrivée manquant + push const
+    const handlePath = () => {
+        setDepartHasError(false);
+        setArriveeHasError(false);
+        setTimeHasError(false);
+
+        let hasError = false;
+
+        if (!Depart || !Depart.trim()) {
+            setDepartHasError(true);
+            hasError = true;
+        }
+
+        if (!Arrivee || !Arrivee.trim()) {
+            setArriveeHasError(true);
+            hasError = true;
+        }
+        if (!timeArr && !timeDep) {
+            setTimeHasError(true);
+            hasError = true;
+        }
+
+        if (hasError) return;
+
+        router.push({
+            pathname: "/(main)/path",
+            params: {
+                Depart: Depart.trim(),
+                Arrivee: Arrivee.trim(),
+                timeDep: timeDep.toISOString(),
+                timeArr: timeArr.toISOString(),
+            },
+        });
+    };
     const mapRef = useRef<MapRef>(null);
 
     // Récupération des insets de sécurité pour gérer les marges et le padding -> (doit être sur chaque page)
@@ -83,7 +121,17 @@ export default function WaypointScreen() {
                                 <View style={styles.secondaryDownFrame}>
                                     <LogoNavbar height={25} preserveAspectRatio="xMidYMid meet" />
                                     <View style={{ flex: 1, minWidth: 0 }}>
-                                        <TextInput style={[styles.destinationText, { color: theme.MainTextBlack }]} multiline={false} placeholder="Départ" placeholderTextColor={theme.TextBlackOpa60} value={Depart} onChangeText={(val) => setDepart(val)} />
+                                        <TextInput
+                                            style={[styles.destinationText, departHasError && styles.inputError, { color: theme.MainTextBlack }]}
+                                            multiline={false}
+                                            placeholder="Départ"
+                                            placeholderTextColor={theme.TextBlackOpa60}
+                                            value={Depart}
+                                            onChangeText={(val) => {
+                                                setDepart(val);
+                                                if (val.trim()) setDepartHasError(false);
+                                            }}
+                                        />
                                     </View>
                                 </View>
 
@@ -178,19 +226,7 @@ export default function WaypointScreen() {
                         </ScrollView>
                     </View>
 
-                    <Pressable
-                        style={[styles.button, { backgroundColor: theme.ButtonBackground }]}
-                        onPress={() =>
-                            router.push({
-                                pathname: "/(main)/path",
-                                params: {
-                                    Depart,
-                                    Arrivee,
-                                    timeDep: timeDep.toISOString(),
-                                    timeArr: timeArr.toISOString(),
-                                },
-                            })
-                        }>
+                    <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={handlePath}>
                         <ThemedText style={[styles.buttonText, { color: theme.MainTextBlack }]}>Go {" >"}</ThemedText>
                     </Pressable>
                 </View>
@@ -346,6 +382,10 @@ const styles = StyleSheet.create({
         fontWeight: FontWeight.Bold,
         fontSize: 16,
         paddingVertical: 0,
+    },
+    inputError: {
+        borderColor: "#FF3B30",
+        borderWidth: 1.5,
     },
 
     // ------------------------- Waypoints Box -------------------------

@@ -141,9 +141,9 @@ const styles = StyleSheet.create({
     toggleThumb: {
         position: "absolute",
         left: 2,
-        width: 22,
-        height: 24,
-        borderRadius: 11,
+        width: 26,
+        height: 26,
+        borderRadius: 13,
         justifyContent: "center",
         alignItems: "center",
         shadowColor: "#000",

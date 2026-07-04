@@ -1,8 +1,8 @@
 import { View } from "react-native";
 import { WebView } from "react-native-webview";
-import { useColorScheme } from "react-native";
 import { waypoints } from "@/data/waypoints";
 import { forwardRef, useImperativeHandle, useRef } from "react";
+import { useCustomTheme } from "@/hooks/themeContext";
 
 export interface MapRef {
     centerMap: (lat: number, lng: number, id?: number) => void;
@@ -10,10 +10,11 @@ export interface MapRef {
 
 const Map = forwardRef<MapRef>((props, ref) => {
     const webViewRef = useRef<WebView>(null);
-    const colorScheme = useColorScheme();
+    const { themeMode } = useCustomTheme(); 
+    const isDarkMode = themeMode === "dark";
 
-    const DarkModeMap = colorScheme === "dark" ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-    const mapFilter = colorScheme === "dark" ? "brightness(2.3) contrast(1) saturate(0.9)" : "none";
+    const DarkModeMap = isDarkMode  ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+    const mapFilter = isDarkMode ? "brightness(2.3) contrast(1) saturate(0.9)" : "none";
 
     useImperativeHandle(ref, () => ({
         centerMap(lat: number, lng: number, id?: number) {

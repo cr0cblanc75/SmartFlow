@@ -7,16 +7,16 @@ import Bus_Icon from "@/assets/Bus_Icon.svg";
 import DashLine from "@/assets/DashLine.svg";
 
 type PathFrameProps = {
-    metro?: "M1" | "M2" | "M3" | "M3bis" | "M4" | "M5" | "M6" | "M7" | "M7bis" | "M8" | "M9" | "M10" | "M11" | "M12" | "M13" | "M14" | "M15" | "M16";
-    bus?: string;
+    mode: "metro" | "bus";
+    label: string; // ex: M7 ou B.47
     stopStation?: string;
     isLast?: boolean;
 };
 
-export function PathFrame({ metro, bus, stopStation = "<station>", isLast }: PathFrameProps) {
+export function PathFrame({ mode, label, stopStation = "<station>", isLast }: PathFrameProps) {
     const theme = useTheme();
 
-    const metroColors: { [key: string]: string } = {
+    const metroColors: Record<string, string> = {
         M1: "#FFCD00",
         M2: "#003CA6",
         M3: "#837902",
@@ -36,23 +36,27 @@ export function PathFrame({ metro, bus, stopStation = "<station>", isLast }: Pat
         M15: "#A626AA",
         M16: "#D16BA5",
     };
+
+    const isMetro = mode === "metro";
+    const bgColor = isMetro ? (metroColors[label] ?? "#000") : "#2D2D2D";
+
     return (
         <View style={styles.contentFrame}>
-            {metro == null ? (
-                <View style={styles.visualizerFrame}>
-                    <Bus_Icon width={40} height={35} preserveAspectRatio="xMidYMid meet" />
-                    {!isLast && <DashLine height={25} width={2} preserveAspectRatio="xMidYMid meet" />}
-                </View>
-            ) : (
-                <View style={styles.visualizerFrame}>
-                    <View style={[styles.metroIcon, { backgroundColor: metroColors[metro ?? "M1"] }]}>
-                        <ThemedText style={[styles.metroTextIcon, { color: theme.MainTextBlack }]}>{metro}</ThemedText>
+            {/* LEFT */}
+            <View style={styles.visualizerFrame}>
+                {isMetro ? (
+                    <View style={[styles.metroIcon, { backgroundColor: bgColor }]}>
+                        <ThemedText style={[styles.metroTextIcon, { color: theme.MainTextBlack }]}>{label}</ThemedText>
                     </View>
-                    {!isLast && <DashLine height={25} width={2} preserveAspectRatio="xMidYMid meet" />}
-                </View>
-            )}
+                ) : (
+                    <Bus_Icon width={40} height={35} />
+                )}
+                {!isLast && <DashLine height={25} width={2} preserveAspectRatio="xMidYMid meet" />}
+            </View>
+
+            {/* RIGHT */}
             <View style={styles.textFrame}>
-                <ThemedText style={[styles.metroText, { color: theme.MainTextBlack }]}>Direction {metro ?? bus}</ThemedText>
+                <ThemedText style={[styles.metroText, { color: theme.MainTextBlack }]}>Direction {label}</ThemedText>
                 <ThemedText style={[styles.stopAt_Text, { color: theme.MainTextBlack }]}>Stop à :</ThemedText>
                 <ThemedText style={[styles.stationText, { color: theme.MainTextBlack }]}>{stopStation}</ThemedText>
             </View>
@@ -94,6 +98,8 @@ const styles = StyleSheet.create({
     metroTextIcon: {
         fontWeight: FontWeight.Bold,
         fontSize: 16,
+        maxWidth: 35,
+        maxHeight: 35,
     },
 
     // ------------------- Right Box -------------------

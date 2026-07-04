@@ -23,6 +23,21 @@ import { mainClc } from "../../../scripts/back_path";
 import graph from "../../../scripts/graph.json";
 import timetable from "../../../scripts/timetable.json";
 
+type Step =
+    | {
+          type: "transport";
+          mode: "metro" | "bus";
+          line: string;
+          from: string;
+          to: string;
+      }
+    | {
+          type: "correspondance";
+          duration: string;
+          from: string;
+          to: string;
+      };
+
 type PathResult = {
     elapsed: number;
     from: string;
@@ -32,8 +47,23 @@ type PathResult = {
     totalDuration: string;
     nbCorrespondances: number;
     nbStops: number;
-    steps: any[];
+    steps: Step[];
 };
+
+function buildPathFrames(steps: Step[]) {
+    const transports = steps.filter((s): s is Extract<Step, { type: "transport" }> => s.type === "transport");
+
+    return transports.map((step, index) => {
+        const isLast = index === transports.length - 1;
+
+        return {
+            mode: step.mode,
+            label: step.line,
+            stopStation: step.to,
+            isLast,
+        };
+    });
+}
 
 export default function PathScreen() {
     const theme = useTheme();
@@ -49,6 +79,7 @@ export default function PathScreen() {
     const [TimeDepString, setTimeDepString] = useState("...");
     const [TimeArrString, setTimeArrString] = useState("...");
 
+    /* LA FONCTION QUI PERMET DE LANCER L'ALGO DE RECHERCHE DE CHEMIN */
     useEffect(() => {
         if (!Depart || !Arrivee || !timeDep) return;
 
@@ -85,6 +116,7 @@ export default function PathScreen() {
 
     const ETAco2 = "203,5g";
     const ETAtime = pathFinded?.totalDuration ?? "chargement ...";
+    const frames = pathFinded ? buildPathFrames(pathFinded.steps) : [];
 
     const mapRef = useRef<MapRef>(null);
 
@@ -177,11 +209,14 @@ export default function PathScreen() {
                                     </View>
                                 </View>
                             </View>
-
+                            {frames.map((frame, index) => (
+                                <PathFrame key={index} mode={frame.mode} label={frame.label} stopStation={frame.stopStation} isLast={frame.isLast} />
+                            ))}
+                            {/*
                             <PathFrame metro={"M7"} stopStation="Station A" />
                             <PathFrame bus={"B.47"} stopStation="Station Bus" />
                             <PathFrame metro={"M14"} stopStation="Station B" />
-                            <PathFrame metro={"M3bis"} stopStation="Station C" isLast={true} />
+                            <PathFrame metro={"M3bis"} stopStation="Station C" isLast={true} />*/}
                         </ScrollView>
                     </View>
                 </View>
