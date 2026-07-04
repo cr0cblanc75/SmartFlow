@@ -3,11 +3,12 @@ import { ThemedText } from "../themed-text";
 import { Spacing, FontWeight } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import Bus_Icon from "@/assets/Bus_Icon.svg";
+import Train_Icon from "@/assets/Train_Icon.svg";
 
 import DashLine from "@/assets/DashLine.svg";
 
 type PathFrameProps = {
-    mode: "metro" | "bus";
+    mode: "metro" | "bus" | "train";
     label: string;
     stopStation?: string;
     isLast?: boolean;
@@ -15,6 +16,26 @@ type PathFrameProps = {
 
 export function PathFrame({ mode, label, stopStation = "<station>", isLast }: PathFrameProps) {
     const theme = useTheme();
+
+    const renderLeftIcon = () => {
+        if (mode === "metro") {
+            return (
+                <View style={[styles.metroIcon, { backgroundColor: bgColor }]}>
+                    <ThemedText style={[styles.metroTextIcon, { color: theme.MainTextBlack }]}>{label}</ThemedText>
+                </View>
+            );
+        }
+
+        if (mode === "bus") {
+            return <Bus_Icon width={40} height={35} />;
+        }
+
+        if (mode === "train") {
+            return <Train_Icon width={40} height={35} />;
+        }
+
+        return null;
+    };
 
     const metroColors: Record<string, string> = {
         M1: "#FFCD00",
@@ -44,19 +65,20 @@ export function PathFrame({ mode, label, stopStation = "<station>", isLast }: Pa
         <View style={styles.contentFrame}>
             {/* LEFT */}
             <View style={styles.visualizerFrame}>
-                {isMetro ? (
-                    <View style={[styles.metroIcon, { backgroundColor: bgColor }]}>
-                        <ThemedText style={[styles.metroTextIcon, { color: theme.MainTextBlack }]}>{label}</ThemedText>
-                    </View>
-                ) : (
-                    <Bus_Icon width={40} height={35} />
-                )}
+                {renderLeftIcon()}
                 {!isLast && <DashLine height={25} width={2} preserveAspectRatio="xMidYMid meet" />}
             </View>
 
             {/* RIGHT */}
             <View style={styles.textFrame}>
-                <ThemedText style={[styles.metroText, { color: theme.MainTextBlack }]}>Direction {label}</ThemedText>
+                {isMetro ? (
+                    <ThemedText style={[styles.metroText, { color: theme.MainTextBlack }]}>Direction {label}</ThemedText>
+                ) : (
+                    <ThemedText style={[styles.metroText, { color: theme.MainTextBlack }]}>
+                        {"Ligne →"} {label}
+                    </ThemedText>
+                )}
+
                 <ThemedText style={[styles.stopAt_Text, { color: theme.MainTextBlack }]}>Stop à :</ThemedText>
                 <ThemedText style={[styles.stationText, { color: theme.MainTextBlack }]}>{stopStation}</ThemedText>
             </View>

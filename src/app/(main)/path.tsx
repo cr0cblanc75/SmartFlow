@@ -189,7 +189,7 @@ export default function PathScreen() {
                     <View style={styles.waypointDisplayerBigBox}>
                         <ScrollView contentContainerStyle={[styles.waypointFrame, { backgroundColor: theme.MainBackground100 }]} showsVerticalScrollIndicator={true}>
                             <View style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ display: "flex", flex: 1, justifyContent: "center", alignItems: "center" }}>
                                     <View style={styles.recapDestinationTop}>
                                         <ThemedText style={[styles.recapDestinationText, { color: theme.MainTextBlack }]}>de </ThemedText>
                                         <ThemedText style={[styles.recapDestinationTime, { color: theme.MainTextBlack }]}>{Depart}</ThemedText>
@@ -374,7 +374,8 @@ const styles = StyleSheet.create({
         flexDirection: "row",
 
         justifyContent: "center",
-        alignItems: "flex-start",
+        alignContent: "center",
+        alignItems: "center",
     },
 
     recapDestinationBottom: {
@@ -400,7 +401,6 @@ const styles = StyleSheet.create({
     recapDestinationTime: {
         fontSize: 14,
         fontWeight: FontWeight.Bold,
-        textAlign: "left",
 
         textTransform: "uppercase",
     },
