@@ -1,4 +1,4 @@
-import { useState,useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
 
 import { Image } from "expo-image";
@@ -16,11 +16,30 @@ import { useCustomTheme } from "@/hooks/themeContext";
 
 import {} from "react-native";
 import { AnimatedScreen } from "@/components/AnimatedScreen";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
 export default function ProfilePage() {
     const theme = useTheme();
     const router = useRouter();
+
+    // Pour stocker l'utilisateurs utilisé actuellement
+    const [user, setUser] = useState<any>(null);
+
+    useEffect(() => {
+    const loadUserData = async () => {
+        try {
+            const storedUser = await AsyncStorage.getItem("current_user");
+            if (storedUser) {
+                setUser(JSON.parse(storedUser));
+            }
+        } catch (error) {
+            console.error("Erreur lors du chargement des données utilisateur :", error);
+        }
+    };
+
+    loadUserData();
+}, []);
 
     // Dark/Light mode
     const { themeMode, toggleTheme } = useCustomTheme(); 
@@ -92,7 +111,29 @@ export default function ProfilePage() {
                 {/* ZONE DU BAS */}
                 <ScrollView style={[styles.scrollView, { backgroundColor: theme.MainBackground }]} contentContainerStyle={styles.scrollContent}>
                     <ThemedText style={[styles.welcomeText, { color: theme.MainTextBlack }]}>Hi,</ThemedText>
-                    <ThemedText style={[styles.nameText, { color: theme.MainTextBlack }]}>François</ThemedText>
+                    {/* USERNAME */}
+                    <ThemedText style={[styles.nameText, { color: theme.MainTextBlack }]}>{user ? user.id : "Invité"}</ThemedText>
+
+                    {/* USER INFO */}
+                    <ThemedText style={[styles.sectionTitle, { color: theme.MainTextBlack }]}>
+                        Mes informations
+                    </ThemedText>
+
+                    {/* VILLE */}
+                    <ThemedText style={[styles.infoTextGrey, { color: theme.textSecondary} ]}>
+                        Vous habitez à :
+                    </ThemedText>
+                    <ThemedText style={[styles.infoText, { color: theme.MainTextBlack} ]}>
+                        {user ? user.city : "Ville ?"}
+                    </ThemedText>
+
+                    {/* MAIL */}
+                    <ThemedText style={[styles.infoTextGrey, { color: theme.textSecondary} ]}>
+                        Votre mail d'inscription :
+                    </ThemedText>
+                    <ThemedText style={[styles.infoText, { color: theme.MainTextBlack} ]}>
+                        {user ? user.mail : "Mail ?"}
+                    </ThemedText>
                 </ScrollView>
             </View>
         </AnimatedScreen>
@@ -194,5 +235,27 @@ const styles = StyleSheet.create({
         fontWeight: FontWeight.Bold,
         lineHeight: 38,
         marginTop: 2,
+    },
+
+    sectionTitle: {
+        fontSize: 24,
+        fontWeight: FontWeight.Bold,
+        textAlign: "center",
+        marginTop: 35,
+        marginBottom: 15,
+        letterSpacing: 0.3,
+    },
+    infoText: {
+        fontSize: 20,
+        fontWeight: FontWeight.SemiBold,
+        textAlign: "center",
+        marginVertical: 8,
+        letterSpacing: 0.5,
+    },
+    infoTextGrey: {
+        fontSize: 16,
+        fontWeight: FontWeight.Medium,
+        textAlign: "left",
+        marginTop: 20,
     },
 });

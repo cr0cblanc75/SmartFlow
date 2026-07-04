@@ -42,6 +42,8 @@ export default function TabTwoScreen() {
                 return;
             }
 
+            await AsyncStorage.setItem('current_user', JSON.stringify(user));
+
             setErrorMessage("");
             router.push("/(main)/home_map");
         } catch (error) {
