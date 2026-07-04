@@ -141,9 +141,11 @@ function calculerDistanceParTemps(travelSec) {
     return (travelSec / 3600) * VITESSE_MARCHE_KMH;
 }
 
+/*
 module.exports = {
     calculerEmpreinteTroncon,
     calculerHaversineBrute,
     calculerDistanceParTemps,
     FE_REFERENCE_SALE_G_PAR_KM
 };
+*/

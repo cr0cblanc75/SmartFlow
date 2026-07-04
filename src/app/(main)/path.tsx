@@ -19,7 +19,7 @@ import { AnimatedScreen } from "@/components/AnimatedScreen";
 import Map, { MapRef } from "@/leaflet/leaflet";
 import { ThemedText } from "@/components/themed-text";
 
-import { mainClc } from "../../../scripts/dijkstra_timed";
+import { mainClc } from "../../../scripts/back_path";
 import graph from "../../../scripts/graph.json";
 import timetable from "../../../scripts/timetable.json";
 
