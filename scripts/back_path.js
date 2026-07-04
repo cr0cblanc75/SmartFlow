@@ -1043,6 +1043,7 @@ function findPathTimedArrivalByIds(graph, timetable, fromId, toId, options = {})
  * @param {string|null} [params.departureTime]
  * @param {string|null} [params.arrivalTime]
  * @param {boolean} [params.wheelchair]
+ * @param {boolean} [params.debug]
  */
 export function mainClc({ graph, timetable, fromName, toName, fromId = null, toId = null, departureTime = null, arrivalTime = null, wheelchair = false, debug = false }) {
     if (!departureTime && !arrivalTime) {

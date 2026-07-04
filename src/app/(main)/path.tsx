@@ -95,6 +95,7 @@ export default function PathScreen() {
             toName: Arrivee,
             departureTime: formatedTimeDep,
             arrivalTime: formatedTimeDep === formatedTimeArr ? null : formatedTimeArr,
+            debug: false,
         });
 
         console.log(">>>> NEW RESULT >>>>");
