@@ -163,7 +163,7 @@ export default function PathScreen() {
                                     <ThemedText style={[styles.recapDestinationText, { color: theme.MainTextBlack }]}> à </ThemedText>
                                     <ThemedText style={[styles.recapDestinationTime, { color: theme.MainTextBlack }]}>{Arrivee}</ThemedText>
                                 </View>
-                                <View style={styles.recapDestinationBottom}>
+                                <View style={[styles.recapDestinationBottom, { borderBottomColor: theme.MainTextBlack }]}>
                                     <View style={{ display: "flex", flexDirection: "row" }}>
                                         <ThemedText style={[styles.recapDestinationText, { color: theme.MainTextBlack }]}>Départ </ThemedText>
                                         <ThemedText style={[styles.recapDestinationTime, { color: theme.MainTextBlack }]}> {TimeDepString}</ThemedText>
@@ -348,6 +348,9 @@ const styles = StyleSheet.create({
 
         justifyContent: "space-between",
         alignItems: "flex-start",
+
+        paddingBottom: 8,
+        borderBottomWidth: 1.5,
     },
 
     recapDestinationText: {

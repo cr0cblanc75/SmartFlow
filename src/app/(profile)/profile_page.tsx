@@ -50,9 +50,17 @@ export default function ProfilePage() {
                 </View>
 
                 {/* ZONE DU HAUT */}
-                <View style={[styles.topBackground, { backgroundColor: theme.MainBackground }]}>
-                    {/*Dark/Light mode button*/}
-                    <Pressable></Pressable>
+                <View style={[styles.topBackground, { backgroundColor: theme.MainBackground, paddingTop: safeAreaInsets.top + 10 }]}>
+                    <View style={styles.actionHeader}>
+                        <Pressable style={styles.backButton} onPress={() => router.push("/(main)/home_map")}>
+                            {/*Image de la flèche retour*/}
+                        </Pressable>
+
+                        
+                        {/*Dark/Light mode button*/}
+                        <Pressable style={styles.toggleTrack} onPress={toggleTheme}>
+                        </Pressable>
+                    </View>
                 </View>
 
                 {/* ZONE DU BAS */}
@@ -68,7 +76,33 @@ const styles = StyleSheet.create({
     },
 
     topBackground: {
-        flex: 1,
-        height: "35%",
+        height: 200,
+        width: "100%",
+        zIndex: 2,
     },
+    actionHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        paddingHorizontal: Spacing.five,
+        width: "100%",
+    },
+
+    backButton:{
+        width: 40,
+        height: 40,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+
+    toggleTrack:{
+        width: 26,
+        height: 52,
+        borderRadius: 13,
+        padding: 2,
+        flexDirection: "column",
+        justifyContent: "space-between",
+        alignItems: "center",
+        position: "relative",
+    }
 });

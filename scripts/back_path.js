@@ -692,7 +692,7 @@ function dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelc
 }
 
 // ─── findPathTimed ────────────────────────────────────────────────────────────
-export function findPathTimed(graph = graph, timetable = timetable, fromName, toName, options = {}) {
+function findPathTimed(graph = graph, timetable = timetable, fromName, toName, options = {}) {
     const { departureTime = "08:00", wheelchair = false } = options;
 
     const nodeMap = {};
