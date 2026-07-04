@@ -10,11 +10,23 @@ This is an [Expo](https://expo.dev) project.
     npm install
     ```
 
+<br>
+
 2. Start the app (don't forget to be in the right folder)
+   <br>
+   If you start the app for the first time i recommand using (note that it can take up to 5 minutes to load the app the first time - do not be afraid of a loading process stopping for few minutes at 99%):
 
     ```bash
     npx expo start -c
     ```
+
+    If you already have launch the app, and only want to see the result of some changement, use :
+
+    ```bash
+    npx expo start
+    ```
+
+<br>
 
 3. Then you should see a QR_code in the terminal. Go at [ExpoGo]('https://expo.dev/go') and download on your mobile phone the latest version of the APK.
 
@@ -31,7 +43,6 @@ Then scan the QR_code and see the result :)
 The app is dynamicaly update. You don't need to relaunch everytime the code with the procedure above (starting at 2.). _Except if you have modify the backend - have fun guys_
 
 <br><br>
-
 
 ## 📁 Architecture of the Projet
 
@@ -81,7 +92,6 @@ Do not rename the folder, there name are absolute in this specific format.
 | `.tsx`    | React / React Native file |
 
 A file starting with a `_` as `_layout.tsx`, is a specific system file.
-
 
 ## Backend additions (committed by Paul - 28/06/26)
 

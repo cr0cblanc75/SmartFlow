@@ -157,12 +157,12 @@ export default function PathScreen() {
                     <View style={styles.waypointDisplayerBigBox}>
                         <ScrollView contentContainerStyle={[styles.waypointFrame, { backgroundColor: theme.MainBackground100 }]} showsVerticalScrollIndicator={true}>
                             <View style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                                <View style={styles.recapDestinationTop}>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recapDestinationTop}>
                                     <ThemedText style={[styles.recapDestinationText, { color: theme.MainTextBlack }]}>de </ThemedText>
                                     <ThemedText style={[styles.recapDestinationTime, { color: theme.MainTextBlack }]}>{Depart}</ThemedText>
                                     <ThemedText style={[styles.recapDestinationText, { color: theme.MainTextBlack }]}> à </ThemedText>
                                     <ThemedText style={[styles.recapDestinationTime, { color: theme.MainTextBlack }]}>{Arrivee}</ThemedText>
-                                </View>
+                                </ScrollView>
                                 <View style={[styles.recapDestinationBottom, { borderBottomColor: theme.MainTextBlack }]}>
                                     <View style={{ display: "flex", flexDirection: "row" }}>
                                         <ThemedText style={[styles.recapDestinationText, { color: theme.MainTextBlack }]}>Départ </ThemedText>
