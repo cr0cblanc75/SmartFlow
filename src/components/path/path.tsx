@@ -43,7 +43,7 @@ export function PathFrame({ metro, stopStation = "<station>", isLast }: PathFram
                 {!isLast && <DashLine height={25} width={2} preserveAspectRatio="xMidYMid meet" />}
             </View>
             <View style={styles.textFrame}>
-                <ThemedText style={[styles.metroText, { color: theme.MainTextBlack }]}>Ligne {metro}</ThemedText>
+                <ThemedText style={[styles.metroText, { color: theme.MainTextBlack }]}>Direction {metro}</ThemedText>
                 <ThemedText style={[styles.stopAt_Text, { color: theme.MainTextBlack }]}>Stop à :</ThemedText>
                 <ThemedText style={[styles.stationText, { color: theme.MainTextBlack }]}>{stopStation}</ThemedText>
             </View>

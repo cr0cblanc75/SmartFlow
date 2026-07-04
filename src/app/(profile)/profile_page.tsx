@@ -48,13 +48,11 @@ export default function ProfilePage() {
     return (
         <AnimatedScreen type="fade" duration={200}>
             <View style={{ flex: 1 }}>
-                <View style={[StyleSheet.absoluteFill, { zIndex: 1, pointerEvents: "none" }]}>
-                    <Image source={require("@/assets/images/deco-shapes.png")} style={{ width: 235, height: 173, position: "absolute", top: -40, left: -80 }} />
-                    <Image source={require("@/assets/images/deco-shapes.png")} style={{ width: 235, height: 173, position: "absolute", bottom: -50, right: -80 }} />
-                </View>
 
                 {/* ZONE DU HAUT */}
-                <View style={[styles.topBackground, { backgroundColor: theme.MainBackground, paddingTop: safeAreaInsets.top + 10 }]}>
+                <View style={[styles.topBackground, { backgroundColor: theme.MainBackground200, paddingTop: safeAreaInsets.top + 10 }]}>
+                    <Image source={require("@/assets/images/deco-shapes.png")} style={{ width: 235, height: 173, position: "absolute", top: -40, left: -80, opacity: 0.3, zIndex: 0 }}/>
+
                     <View style={styles.actionHeader}>
                         <Pressable style={styles.backButton} onPress={() => router.push("/(main)/home_map")}>
                             <ReturnButton height={30} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
@@ -70,19 +68,21 @@ export default function ProfilePage() {
                                 <SunIcon height={20} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
                             </View>
 
-                            <View style={[styles.toggleThumb, { backgroundColor: isDarkMode ? theme.MainTextWhite : theme.MainTextBlack, top: isDarkMode ? 2 : 26 }]}>
-                                {/*<Ionicons 
-                                    name={isDarkMode ? "moon-outline" : "sunny-outline"} 
-                                    size={13} 
-                                    color={isDarkMode ? "#FFFFFF" : "#000000"} 
-                                />*/}
-                            </View>
+                            <View style={[styles.toggleThumb, { backgroundColor: theme.MainTextWhite, top: isDarkMode ? 2 : 26 }]}/>
                         </Pressable>
                     </View>
                 </View>
 
+                {/* ZONE DE L'AVATAR */}
+                <View style={styles.avatarWrapper}>
+                    <View style={[styles.avatar, { backgroundColor: theme.BackgroundAwardCards }]} />
+                </View>
+
                 {/* ZONE DU BAS */}
-                <ScrollView></ScrollView>
+                <ScrollView style={[styles.scrollView, { backgroundColor: theme.MainBackground }]} contentContainerStyle={styles.scrollContent}>
+                    <ThemedText style={[styles.welcomeText, { color: theme.MainTextBlack }]}>Hi,</ThemedText>
+                    <ThemedText style={[styles.nameText, { color: theme.MainTextBlack }]}>François</ThemedText>
+                </ScrollView>
             </View>
         </AnimatedScreen>
     );
@@ -91,6 +91,10 @@ export default function ProfilePage() {
 const styles = StyleSheet.create({
     scrollView: {
         flex: 1,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        marginTop: -30,
+        zIndex: 5,
     },
 
     // ------------------------- Top part -------------------------
@@ -146,5 +150,36 @@ const styles = StyleSheet.create({
     },
 
 
+    // ------------------------- Avatar Part -------------------------
+    avatarWrapper: {
+        position: "absolute",
+        top: 120,
+        alignSelf: "center",
+        zIndex: 99,
+        elevation: 6,
+    },
+
+    avatar: {
+        width: 130,
+        height: 130,
+        borderRadius: 65,
+    },
+
     // ------------------------- Bottom part -------------------------
+    scrollContent: {
+        paddingTop: 90, // Laisse de l'espace pour que l'avatar ne cache pas le texte "Hi, François"
+        paddingHorizontal: Spacing.five,
+        paddingBottom: Spacing.five,
+    },
+    welcomeText: {
+        fontSize: 18,
+        fontWeight: FontWeight.Medium,
+        lineHeight: 22,
+    },
+    nameText: {
+        fontSize: 34,
+        fontWeight: FontWeight.Bold,
+        lineHeight: 38,
+        marginTop: 2,
+    },
 });
