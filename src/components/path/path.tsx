@@ -61,15 +61,15 @@ export function PathFrame({ mode, label, stopStation = "<station>", isLast }: Pa
 
         M9: ["Pont de Sèvres", "Mairie de Montreuil"],
 
-        M10: ["Boulogne Pont de Saint-Cloud", "Gare d’Austerlitz"],
+        M10: ["Boulogne Pont de Saint-Cloud", "Gare d'Austerlitz"],
 
-        M11: ["Châtelet", "Rosny – Bois-Perrier"],
+        M11: ["Châtelet", "Rosny-Bois-Perrier"],
 
-        M12: ["Mairie d’Issy", "Mairie d'Aubervilliers"],
+        M12: ["Mairie d'Issy", "Mairie d'Aubervilliers"],
 
-        M13: ["Châtillon – Montrouge", "Saint-Denis – Université", "Les Courtilles"],
+        M13: ["Châtillon Montrouge", "Saint-Denis-Université", "Asnières-Gennevilliers Les Courtilles"],
 
-        M14: ["Saint-Denis – Pleyel", "Olympiades"],
+        M14: ["Saint-Denis - Pleyel", "Aéroport d'Orly"],
     };
     const getMetroLine = (station: string) => {
         for (const line in metroTerminus) {
