@@ -4,6 +4,7 @@ import { Spacing, FontWeight } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import Bus_Icon from "@/assets/Bus_Icon.svg";
 import Train_Icon from "@/assets/Train_Icon.svg";
+import Metro_Icon from "@/assets/Metro_Icon.svg";
 
 import DashLine from "@/assets/DashLine.svg";
 
@@ -85,10 +86,12 @@ export function PathFrame({ mode, label, stopStation = "<station>", isLast }: Pa
 
     const renderLeftIcon = () => {
         if (mode === "metro") {
-            return (
+            return labelM !== "unknown" ? (
                 <View style={[styles.metroIcon, { backgroundColor: bgColor }]}>
                     <ThemedText style={[styles.metroTextIcon, { color: theme.MainTextBlack }]}>{labelM}</ThemedText>
                 </View>
+            ) : (
+                <Metro_Icon width={40} height={35} />
             );
         }
 
