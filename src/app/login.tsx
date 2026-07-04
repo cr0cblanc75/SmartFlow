@@ -11,6 +11,7 @@ import { FontWeight, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { Pressable } from "react-native";
 import { useRouter } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function TabTwoScreen() {
     const [ID, setID] = useState("");
@@ -20,7 +21,7 @@ export default function TabTwoScreen() {
     const [errorMessage, setErrorMessage] = useState("");
 
     // Message d'erreur pour mdp ou indentifiant manquant
-    const handleLogin = () => {
+    const handleLogin = async () => {
         if (!ID.trim()) {
             setErrorMessage("L'identifiant ne peut pas être vide.");
             return;
@@ -29,8 +30,23 @@ export default function TabTwoScreen() {
             setErrorMessage("Le mot de passe est requis.");
             return;
         }
-        setErrorMessage("");
-        router.push("/(main)/home_map");
+        
+        try {
+            const existingUsersJSON = await AsyncStorage.getItem('users_database');
+            const users = existingUsersJSON ? JSON.parse(existingUsersJSON) : [];
+
+            const user = users.find((u: any) => u.id === ID.trim() && u.mdp === mdp.trim());
+
+            if (!user) {
+                setErrorMessage("Identifiant ou mot de passe incorrect.");
+                return;
+            }
+
+            setErrorMessage("");
+            router.push("/(main)/home_map");
+        } catch (error) {
+            setErrorMessage("Erreur lors de la tentative de connexion.");
+        }
     };
 
     // Récupération des insets de sécurité pour gérer les marges et le padding -> (doit être sur chaque page)

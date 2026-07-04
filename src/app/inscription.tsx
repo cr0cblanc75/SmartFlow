@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Image } from "expo-image";
 import LogoRegister from "@/assets/Logo-Register.svg";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HomeScreen() {
     const [ID, setID] = useState("");
@@ -25,7 +26,7 @@ export default function HomeScreen() {
     const router = useRouter();
     const [errorMessage, setErrorMessage] = useState("");
 
-    const handleLogin = () => {
+    const handleRegister = async () => {
         if (!ID.trim()) {
             setErrorMessage("L'identifiant ne peut pas être vide.");
             return;
@@ -46,8 +47,32 @@ export default function HomeScreen() {
             setErrorMessage("Veuillez accepter les conditions d'utilisation.");
             return;
         }
-        setErrorMessage("");
-        router.push("/inscription_validated");
+        
+        try {
+            const existingUsersJSON = await AsyncStorage.getItem('users_database');
+            const users = existingUsersJSON ? JSON.parse(existingUsersJSON) : [];
+
+            const userExists = users.some((u: any) => u.id === ID.trim() || u.mail === mail.trim());
+            if (userExists) {
+                setErrorMessage("Cet identifiant ou cet email est déjà utilisé.");
+                return;
+            }
+
+            const newUser = {
+                id: ID.trim(),
+                mdp: mdp.trim(),
+                mail: mail.trim(),
+                city: city.trim()
+            };
+
+            users.push(newUser);
+            await AsyncStorage.setItem('users_database', JSON.stringify(users));
+
+            setErrorMessage("");
+            router.push("/inscription_validated");
+        } catch (error) {
+            setErrorMessage("Une erreur est survenue lors de l'inscription.");
+        }
     };
 
     const safeAreaInsets = useSafeAreaInsets();
@@ -155,7 +180,7 @@ export default function HomeScreen() {
                             </Pressable>
                         </View>
 
-                        <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={handleLogin}>
+                        <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={handleRegister}>
                             <ThemedText style={[styles.buttonText, { color: theme.MainTextWhite }]}>S'inscrire</ThemedText>
                         </Pressable>
                     </View>

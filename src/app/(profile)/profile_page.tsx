@@ -50,7 +50,7 @@ export default function ProfilePage() {
     useEffect(() => {
         Animated.timing(animTop, {
             toValue: isDarkMode ? 0 : 42,
-            duration: 750,
+            duration: 500,
             useNativeDriver: false,
         }).start();
     }, [isDarkMode]);
@@ -133,11 +133,10 @@ const styles = StyleSheet.create({
         width: 40,
         height: 84,
         borderRadius: 20,
-        padding: 4,
+        padding: 10,
         flexDirection: "column",
-        justifyContent: "center",
+        justifyContent: "space-between",
         alignItems: "center",
-        gap: 4,
         position: "relative",
         overflow: "hidden",
     },
