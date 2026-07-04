@@ -8,7 +8,7 @@ import DashLine from "@/assets/DashLine.svg";
 
 type PathFrameProps = {
     mode: "metro" | "bus";
-    label: string; // ex: M7 ou B.47
+    label: string;
     stopStation?: string;
     isLast?: boolean;
 };
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     metroText: {
         fontWeight: FontWeight.Bold,
         fontSize: 16,
-        lineHeight: 16,
+        lineHeight: 18,
     },
 
     stopAt_Text: {
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
         textAlign: "right",
 
         fontWeight: FontWeight.Bold,
-        fontSize: 16,
-        lineHeight: 14,
+        fontSize: 15,
+        lineHeight: 18,
     },
 });

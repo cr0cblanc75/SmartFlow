@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
 
 import { Image } from "expo-image";
@@ -6,7 +6,7 @@ import ReturnButton from "@/assets/ReturnButton.svg";
 import MoonIcon from "@/assets/Lune_Icon.svg";
 import SunIcon from "@/assets/Sun_Icon.svg";
 
-import { Pressable, Platform, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, Platform, ScrollView, StyleSheet, TextInput, View, Animated } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { FontWeight, Spacing } from "@/constants/theme";
@@ -46,6 +46,15 @@ export default function ProfilePage() {
         },
     });
 
+    const animTop = useRef(new Animated.Value(isDarkMode ? 2 : 28)).current;
+    useEffect(() => {
+        Animated.timing(animTop, {
+            toValue: isDarkMode ? 0 : 42,
+            duration: 750,
+            useNativeDriver: false,
+        }).start();
+    }, [isDarkMode]);
+
     return (
         <AnimatedScreen type="fade" duration={200}>
             <View style={{ flex: 1 }}>
@@ -62,7 +71,7 @@ export default function ProfilePage() {
                         
                         {/*Dark/Light mode button*/}
                         <Pressable style={[styles.toggleTrack, {backgroundColor: theme.MainBackgroundGrey100}]} onPress={toggleTheme}>
-                            <View style={[styles.toggleThumb, { backgroundColor: theme.MainTextWhite, top: isDarkMode ? 0 : 24 }]}/>
+                            <Animated.View style={[styles.toggleThumb, { backgroundColor: theme.MainTextWhite, top: animTop }]}/>
 
                             <View style={styles.iconContainer}>
                                 <MoonIcon height={20} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
@@ -101,14 +110,14 @@ const styles = StyleSheet.create({
 
     // ------------------------- Top part -------------------------
     topBackground: {
-        height: 200,
+        height: 260,
         width: "100%",
         zIndex: 2,
     },
     actionHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
-        alignItems: "flex-start",
+        alignItems: "center",
         paddingHorizontal: Spacing.five,
         width: "100%",
     },
@@ -121,13 +130,14 @@ const styles = StyleSheet.create({
     },
 
     toggleTrack:{
-        width: 26,
-        height: 52,
-        borderRadius: 13,
-        padding: 2,
+        width: 40,
+        height: 84,
+        borderRadius: 20,
+        padding: 4,
         flexDirection: "column",
-        justifyContent: "space-between",
+        justifyContent: "center",
         alignItems: "center",
+        gap: 4,
         position: "relative",
         overflow: "hidden",
     },
@@ -140,10 +150,9 @@ const styles = StyleSheet.create({
     },
     toggleThumb: {
         position: "absolute",
-        left: 2,
-        width: 26,
-        height: 26,
-        borderRadius: 13,
+        width: 40,
+        height: 42,
+        borderRadius: 20,
         justifyContent: "center",
         alignItems: "center",
         shadowColor: "#000",
@@ -165,9 +174,9 @@ const styles = StyleSheet.create({
     },
 
     avatar: {
-        width: 130,
-        height: 130,
-        borderRadius: 65,
+        width: 180,
+        height: 180,
+        borderRadius: 95,
     },
 
     // ------------------------- Bottom part -------------------------

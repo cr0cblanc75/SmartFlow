@@ -136,7 +136,7 @@ export default function WaypointScreen() {
                                 </View>
 
                                 {/* HEURE INPUT - Upper */}
-                                <View style={[styles.hourInputFrame, { borderLeftColor: theme.BackgroundAwardCards }]}>
+                                <View style={[styles.hourInputFrame, { borderLeftColor: theme.BackgroundAwardCards }, timeHasError && styles.inputError]}>
                                     {/* CLOCK */}
                                     <View style={styles.clockFrame}>
                                         <ClockButton height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
@@ -159,6 +159,7 @@ export default function WaypointScreen() {
                                                 onChange={(event, selectedDate) => {
                                                     if (event.type === "set" && selectedDate) {
                                                         setTimeDep(selectedDate);
+                                                        setTimeHasError(false);
                                                     }
                                                     setShowDep(false);
                                                 }}
@@ -176,12 +177,22 @@ export default function WaypointScreen() {
                                 <View style={styles.secondaryDownFrame}>
                                     <LogoNavbar height={25} preserveAspectRatio="xMidYMid meet" />
                                     <View style={{ flex: 1, minWidth: 0 }}>
-                                        <TextInput style={[styles.destinationText, { color: theme.MainTextBlack }]} multiline={false} placeholder="Arrivée" placeholderTextColor={theme.TextBlackOpa60} value={Arrivee} onChangeText={(val) => setArrivee(val)} />
+                                        <TextInput
+                                            style={[styles.destinationText, arriveeHasError && styles.inputError, { color: theme.MainTextBlack }]}
+                                            multiline={false}
+                                            placeholder="Arrivée"
+                                            placeholderTextColor={theme.TextBlackOpa60}
+                                            value={Arrivee}
+                                            onChangeText={(val) => {
+                                                setArrivee(val);
+                                                if (val.trim()) setArriveeHasError(false);
+                                            }}
+                                        />
                                     </View>
                                 </View>
 
                                 {/* HEURE INPUT - Bottom */}
-                                <View style={[styles.hourInputFrame, { borderLeftColor: theme.BackgroundAwardCards }]}>
+                                <View style={[styles.hourInputFrame, { borderLeftColor: theme.BackgroundAwardCards }, timeHasError && styles.inputError]}>
                                     {/* CLOCK */}
                                     <View style={[styles.clockFrame, { borderLeftColor: theme.BackgroundAwardCards }]}>
                                         <ClockButton height={25} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
@@ -203,6 +214,7 @@ export default function WaypointScreen() {
                                                     if (event.type === "set" && selectedDate) {
                                                         setTimeArr(selectedDate);
                                                         setArrGiven(true);
+                                                        setTimeHasError(false);
                                                     }
                                                     setShowArr(false);
                                                 }}
