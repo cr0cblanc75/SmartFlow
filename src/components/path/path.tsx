@@ -2,16 +2,18 @@ import { View, StyleSheet, Pressable } from "react-native";
 import { ThemedText } from "../themed-text";
 import { Spacing, FontWeight } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import Bus_Icon from "@/assets/Bus_Icon.svg";
 
 import DashLine from "@/assets/DashLine.svg";
 
 type PathFrameProps = {
     metro?: "M1" | "M2" | "M3" | "M3bis" | "M4" | "M5" | "M6" | "M7" | "M7bis" | "M8" | "M9" | "M10" | "M11" | "M12" | "M13" | "M14" | "M15" | "M16";
+    bus?: string;
     stopStation?: string;
     isLast?: boolean;
 };
 
-export function PathFrame({ metro, stopStation = "<station>", isLast }: PathFrameProps) {
+export function PathFrame({ metro, bus, stopStation = "<station>", isLast }: PathFrameProps) {
     const theme = useTheme();
 
     const metroColors: { [key: string]: string } = {
@@ -36,14 +38,21 @@ export function PathFrame({ metro, stopStation = "<station>", isLast }: PathFram
     };
     return (
         <View style={styles.contentFrame}>
-            <View style={styles.visualizerFrame}>
-                <View style={[styles.metroIcon, { backgroundColor: metroColors[metro ?? "M1"] }]}>
-                    <ThemedText style={[styles.metroTextIcon, { color: theme.MainTextBlack }]}>{metro}</ThemedText>
+            {metro == null ? (
+                <View style={styles.visualizerFrame}>
+                    <Bus_Icon width={40} height={35} preserveAspectRatio="xMidYMid meet" />
+                    {!isLast && <DashLine height={25} width={2} preserveAspectRatio="xMidYMid meet" />}
                 </View>
-                {!isLast && <DashLine height={25} width={2} preserveAspectRatio="xMidYMid meet" />}
-            </View>
+            ) : (
+                <View style={styles.visualizerFrame}>
+                    <View style={[styles.metroIcon, { backgroundColor: metroColors[metro ?? "M1"] }]}>
+                        <ThemedText style={[styles.metroTextIcon, { color: theme.MainTextBlack }]}>{metro}</ThemedText>
+                    </View>
+                    {!isLast && <DashLine height={25} width={2} preserveAspectRatio="xMidYMid meet" />}
+                </View>
+            )}
             <View style={styles.textFrame}>
-                <ThemedText style={[styles.metroText, { color: theme.MainTextBlack }]}>Direction {metro}</ThemedText>
+                <ThemedText style={[styles.metroText, { color: theme.MainTextBlack }]}>Direction {metro ?? bus}</ThemedText>
                 <ThemedText style={[styles.stopAt_Text, { color: theme.MainTextBlack }]}>Stop à :</ThemedText>
                 <ThemedText style={[styles.stationText, { color: theme.MainTextBlack }]}>{stopStation}</ThemedText>
             </View>

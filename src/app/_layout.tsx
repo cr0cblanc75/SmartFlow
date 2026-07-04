@@ -1,12 +1,13 @@
 import { ThemeProvider, DarkTheme, DefaultTheme, Stack } from "expo-router";
 import { useColorScheme } from "react-native";
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
+import { CustomThemeProvider, useCustomTheme } from "@/hooks/themeContext";
 
-export default function Layout() {
-    const colorScheme = useColorScheme();
+function AppContent() {
+    const { themeMode } = useCustomTheme();
 
     return (
-        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <ThemeProvider value={themeMode === "dark" ? DarkTheme : DefaultTheme}>
             <AnimatedSplashOverlay />
 
             <Stack screenOptions={{ headerShown: false, animation: "none" }}>
@@ -19,5 +20,13 @@ export default function Layout() {
                 <Stack.Screen name="(profile)/profile_page" />
             </Stack>
         </ThemeProvider>
+    );
+}
+
+export default function Layout() {
+    return (
+        <CustomThemeProvider>
+            <AppContent />
+        </CustomThemeProvider>
     );
 }

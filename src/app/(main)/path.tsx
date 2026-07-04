@@ -179,6 +179,7 @@ export default function PathScreen() {
                             </View>
 
                             <PathFrame metro={"M7"} stopStation="Station A" />
+                            <PathFrame bus={"B.47"} stopStation="Station Bus" />
                             <PathFrame metro={"M14"} stopStation="Station B" />
                             <PathFrame metro={"M3bis"} stopStation="Station C" isLast={true} />
                         </ScrollView>

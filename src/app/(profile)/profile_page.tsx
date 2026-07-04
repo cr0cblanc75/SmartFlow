@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FontWeight, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { ThemedText } from "@/components/themed-text";
+import { useCustomTheme } from "@/hooks/themeContext";
 
 import {} from "react-native";
 import { AnimatedScreen } from "@/components/AnimatedScreen";
@@ -22,8 +23,8 @@ export default function ProfilePage() {
     const router = useRouter();
 
     // Dark/Light mode
-    const [isDarkMode, setIsDarkMode] = useState(false); 
-    const toggleTheme = () => setIsDarkMode(!isDarkMode);
+    const { themeMode, toggleTheme } = useCustomTheme(); 
+    const isDarkMode = themeMode === 'dark';
 
     // Récupération des insets de sécurité pour gérer les marges et le padding -> (doit être sur chaque page)
     const safeAreaInsets = useSafeAreaInsets();
@@ -60,7 +61,9 @@ export default function ProfilePage() {
 
                         
                         {/*Dark/Light mode button*/}
-                        <Pressable style={styles.toggleTrack} onPress={toggleTheme}>
+                        <Pressable style={[styles.toggleTrack, {backgroundColor: theme.MainBackgroundGrey100}]} onPress={toggleTheme}>
+                            <View style={[styles.toggleThumb, { backgroundColor: theme.MainTextWhite, top: isDarkMode ? 0 : 24 }]}/>
+
                             <View style={styles.iconContainer}>
                                 <MoonIcon height={20} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
                             </View>
@@ -68,7 +71,6 @@ export default function ProfilePage() {
                                 <SunIcon height={20} preserveAspectRatio="xMidYMid meet" color={theme.MainTextBlack} />
                             </View>
 
-                            <View style={[styles.toggleThumb, { backgroundColor: theme.MainTextWhite, top: isDarkMode ? 2 : 26 }]}/>
                         </Pressable>
                     </View>
                 </View>
@@ -127,18 +129,20 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         position: "relative",
+        overflow: "hidden",
     },
     iconContainer: {
         width: 22,
         height: 22,
         justifyContent: "center",
         alignItems: "center",
+        zIndex: 2,
     },
     toggleThumb: {
         position: "absolute",
         left: 2,
         width: 22,
-        height: 22,
+        height: 24,
         borderRadius: 11,
         justifyContent: "center",
         alignItems: "center",
@@ -147,6 +151,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.15,
         shadowRadius: 2,
         elevation: 2,
+        zIndex: 1,
     },
 
 
