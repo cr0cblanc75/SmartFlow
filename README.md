@@ -38,9 +38,9 @@ Then scan the QR_code and see the result :)
 <br>
 <br>
 
-## To know
+## Once in the App
 
-The app is dynamicaly update. You don't need to relaunch everytime the code with the procedure above (starting at 2.). _Except if you have modify the backend - have fun guys_
+You will of course have to create an account before behing able to proceed into the application.
 
 <br><br>
 
@@ -49,59 +49,71 @@ The app is dynamicaly update. You don't need to relaunch everytime the code with
 ```
 .
 ├── README.md
+├── TODO.md
 ├── assets
-│   └── images
+│       └── Assets
 ├── scripts
-│   └── HERE.js <-- to start the backend
+│   ├── acpm.json
+│   ├── back_path.js
+│   ├── build_graph
+│   │   ├── graph_analysis.js
+│   │   ├── gtfs_to_graph.js
+│   │   └── gtfs_to_timetable.js
+│   ├── eco_calculator.js
+│   ├── graph.json
+│   └── timetable.json
+│
+│
+│
+│
 ├── src
 │   ├── app
+│   │   ├── (main)
+│   │   │   ├── home_map.tsx
+│   │   │   ├── path.tsx
+│   │   │   └── waypoints.tsx
+│   │   ├── (profile)
+│   │   │   └── profile_page.tsx
 │   │   ├── _layout.tsx
-│   │   ├── explore.tsx
-│   │   └── index.tsx
+│   │   ├── index.tsx
+│   │   ├── inscription.tsx
+│   │   ├── inscription_validated.tsx
+│   │   └── login.tsx
+│   │
+│   │
 │   ├── components
+│   │   ├── AnimatedScreen.tsx
+│   │   ├── animated-icon.module.css
+│   │   ├── animated-icon.tsx
+│   │   ├── animated-icon.web.tsx
+│   │   ├── app-tabs.tsx
+│   │   ├── external-link.tsx
+│   │   ├── hint-row.tsx
+│   │   ├── path
+│   │   │   └── path.tsx
+│   │   ├── themed-text.tsx
+│   │   ├── themed-view.tsx
+│   │   ├── ui
+│   │   │   └── collapsible.tsx
+│   │   └── waypoints
+│   │       └── waypoints_frame.tsx
 │   ├── constants
 │   │   └── theme.ts
+│   ├── data
+│   │   └── waypoints.js
 │   ├── global.css
-│   └── hooks
-│       ├── use-color-scheme.ts
-│       ├── use-color-scheme.web.ts
-│       └── use-theme.ts
+│   ├── hooks
+│   │   ├── themeContext.tsx
+│   │   ├── use-color-scheme.ts
+│   │   ├── use-color-scheme.web.ts
+│   │   └── use-theme.ts
+│   └── leaflet
+│       └── leaflet.tsx
+│
+│
 ├── app.json
 ├── package-lock.json
 ├── package.json
 └── tsconfig.json
+
 ```
-
-<br>
-
-Do not touch to `global.css`, `/hooks`, `/constants`<br>
-Do not touch to `app.json`, `package-lock.json`, `package.json`
-
-Do not rename the folder, there name are absolute in this specific format.
-
-> **IMPORTANT :**<br>
-> Please do not try to modify `/components`. This folder contains basics components of the native react app. They will be very useful.
-
-<br>
-
-### Quick Reminer :
-
-| Extension | Description               |
-| --------- | ------------------------- |
-| `.ts`     | TypeScript file           |
-| `.tsx`    | React / React Native file |
-
-A file starting with a `_` as `_layout.tsx`, is a specific system file.
-
-## Backend additions (committed by Paul - 28/06/26)
-
-This project now includes backend graph utilities in `scripts/dijkstra_timed.js` for the transport routing engine:
-
-- `findStopsByName(nodes, name)` : find candidate stops by name, tolerant to typos (exact > starts-with > contains > fuzzy/Levenshtein fallback), without ever mixing precision tiers.
-- `findPathTimed(graph, timetable, fromName, toName, options)` / `findPathTimedArrival(...)` : compute the fastest route between two stop names using real timetables, departing at or arriving by a given time.
-- `findPathTimedByIds(graph, timetable, fromId, toId, options)` / `findPathTimedArrivalByIds(...)` : same routing, but on already-resolved stop IDs, so a specific stop picked via `findStopsByName` is never swapped for a similarly-named one.
-- `isConnected(graph)` : check whether the network is globally connected.
-- `getConnectedComponents(graph)` : detect isolated sub-networks.
-- `buildNetworkTree(graph, rootId)` : build a BFS tree from a station, useful for network visualization.
-
-These tools prepare the backend for frontend integration and support the core transport use cases before implementing schedules and user interface features.
