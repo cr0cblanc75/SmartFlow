@@ -701,8 +701,12 @@ function findPathTimed(graph = graph, timetable = timetable, fromName, toName, o
     let fromCandidates = findStopsByName(graph.nodes, fromName);
     let toCandidates = findStopsByName(graph.nodes, toName);
 
-    if (fromCandidates.length === 0) throw new Error(`Aucun arret trouve pour : "${fromName}"`);
-    if (toCandidates.length === 0) throw new Error(`Aucun arret trouve pour : "${toName}"`);
+    if (fromCandidates.length === 0) {
+        return null;
+    }
+    if (toCandidates.length === 0) {
+        return null;
+    }
 
     if (wheelchair) {
         fromCandidates = fromCandidates.filter((s) => s.wheelchair !== false);
@@ -1077,9 +1081,12 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
         });
     }
 
-    const elapsed = Math.round(performance.now() - start);
+    if (!result) {
+        console.log("Aucun arrêt trouvé.");
+        return null;
+    }
 
-    if (!result) return null;
+    const elapsed = Math.round(performance.now() - start);
 
     const formatted = {
         elapsed,

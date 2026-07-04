@@ -95,13 +95,21 @@ export default function PathScreen() {
             toName: Arrivee,
             departureTime: formatedTimeDep,
             arrivalTime: formatedTimeDep === formatedTimeArr ? null : formatedTimeArr,
-            debug: false,
+            debug: true,
         });
 
-        console.log(">>>> NEW RESULT >>>>");
-        res?.steps.forEach((step, index) => {
-            console.log(`[${index}]`, step);
-        });
+        if (res == null) {
+            console.log("No path");
+            setPathFinded(0);
+            return;
+        }
+        // Basculer à "true" si vous voulez le résultat terminal
+        if (false) {
+            console.log(">>>> NEW RESULT >>>>");
+            res?.steps.forEach((step, index) => {
+                console.log(`[${index}]`, step);
+            });
+        }
 
         setTimeArrString(res?.arrivalTime?.slice(0, 5) ?? "...");
         setPathFinded(res);
@@ -116,7 +124,7 @@ export default function PathScreen() {
     };
 
     const ETAco2 = "203,5g";
-    const ETAtime = pathFinded?.totalDuration ?? "chargement ...";
+    const ETAtime = pathFinded === 0 ? "Erreur, veuillez réessayer" : (pathFinded?.totalDuration ?? "chargement ...");
     const frames = pathFinded ? buildPathFrames(pathFinded.steps) : [];
 
     const mapRef = useRef<MapRef>(null);

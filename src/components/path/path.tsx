@@ -17,11 +17,77 @@ type PathFrameProps = {
 export function PathFrame({ mode, label, stopStation = "<station>", isLast }: PathFrameProps) {
     const theme = useTheme();
 
+    const metroColors: Record<string, string> = {
+        M1: "#FFCD00",
+        M2: "#003CA6",
+        M3: "#837902",
+        M3b: "#6EC4E8",
+        M4: "#C04191",
+        M5: "#FF7E2E",
+        M6: "#6ECA97",
+        M7: "#FA9ABA",
+        M7b: "#6ECA97",
+        M8: "#CEADD2",
+        M9: "#B6BD00",
+        M10: "#C9910D",
+        M11: "#704B1C",
+        M12: "#007852",
+        M13: "#6EC4E8",
+        M14: "#62259D",
+        M15: "#A626AA",
+        M16: "#D16BA5",
+    };
+
+    const metroTerminus: Record<string, string[]> = {
+        M1: ["La Défense", "La Défense (Grande Arche)", "Château de Vincennes", "Hôtel de Ville"],
+
+        M2: ["Porte Dauphine (Maréchal de Lattre de Tassigny)", "Nation"],
+
+        M3: ["Pont de Levallois-Bécon", "Gallieni (Parc de Bagnolet)"],
+
+        M3b: ["Gambetta", "Porte des Lilas"],
+
+        M4: ["Bagneux - Lucie Aubrac", "Porte de Clignancourt"],
+
+        M5: ["Bobigny - Pablo Picasso", "Place d'Italie"],
+
+        M6: ["Charles de Gaulle - Étoile", "Nation"],
+
+        M7: ["La Courneuve-8-Mai-1945", "Villejuif-Louis Aragon", "Mairie d’Ivry"],
+
+        M7b: ["Louis Blanc", "Pré-Saint-Gervais"],
+
+        M8: ["Balard", "Créteil-Pointe du Lac"],
+
+        M9: ["Pont de Sèvres", "Mairie de Montreuil"],
+
+        M10: ["Boulogne Pont de Saint-Cloud", "Gare d’Austerlitz"],
+
+        M11: ["Châtelet", "Rosny – Bois-Perrier"],
+
+        M12: ["Mairie d’Issy", "Mairie d'Aubervilliers"],
+
+        M13: ["Châtillon – Montrouge", "Saint-Denis – Université", "Les Courtilles"],
+
+        M14: ["Saint-Denis – Pleyel", "Olympiades"],
+    };
+    const getMetroLine = (station: string) => {
+        for (const line in metroTerminus) {
+            if (metroTerminus[line].includes(station)) {
+                return line;
+            }
+        }
+        return "unknown";
+    };
+
+    const labelM = getMetroLine(label);
+    console.log(label, labelM);
+
     const renderLeftIcon = () => {
         if (mode === "metro") {
             return (
                 <View style={[styles.metroIcon, { backgroundColor: bgColor }]}>
-                    <ThemedText style={[styles.metroTextIcon, { color: theme.MainTextBlack }]}>{label}</ThemedText>
+                    <ThemedText style={[styles.metroTextIcon, { color: theme.MainTextBlack }]}>{labelM}</ThemedText>
                 </View>
             );
         }
@@ -37,29 +103,8 @@ export function PathFrame({ mode, label, stopStation = "<station>", isLast }: Pa
         return null;
     };
 
-    const metroColors: Record<string, string> = {
-        M1: "#FFCD00",
-        M2: "#003CA6",
-        M3: "#837902",
-        M3bis: "#6EC4E8",
-        M4: "#C04191",
-        M5: "#FF7E2E",
-        M6: "#6ECA97",
-        M7: "#FA9ABA",
-        M7bis: "#6ECA97",
-        M8: "#CEADD2",
-        M9: "#B6BD00",
-        M10: "#C9910D",
-        M11: "#704B1C",
-        M12: "#007852",
-        M13: "#6EC4E8",
-        M14: "#62259D",
-        M15: "#A626AA",
-        M16: "#D16BA5",
-    };
-
     const isMetro = mode === "metro";
-    const bgColor = isMetro ? (metroColors[label] ?? "#000") : "#2D2D2D";
+    const bgColor = isMetro ? (metroColors[labelM] ?? "#000") : "#2D2D2D";
 
     return (
         <View style={styles.contentFrame}>
