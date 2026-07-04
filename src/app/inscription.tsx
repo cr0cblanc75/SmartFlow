@@ -71,6 +71,7 @@ export default function HomeScreen() {
             setErrorMessage("");
             router.push("/inscription_validated");
         } catch (error) {
+            console.log(error);
             setErrorMessage("Une erreur est survenue lors de l'inscription.");
         }
     };
@@ -147,7 +148,7 @@ export default function HomeScreen() {
                                 style={[styles.input, { backgroundColor: theme.MainBackground100, color: theme.text, borderColor: theme.text }]}
                                 placeholder="City..."
                                 placeholderTextColor={theme.TextBlackOpa60}
-                                value={city} // 1. Affiche ce qui est dans la mémoire
+                                value={city}
                                 onChangeText={(val) => {
                                     setCity(val);
                                     if (val.trim()) setErrorMessage("");
@@ -160,7 +161,7 @@ export default function HomeScreen() {
                                 style={[styles.input, { backgroundColor: theme.MainBackground100, color: theme.text, borderColor: theme.text }]}
                                 placeholder="Mot de passe..."
                                 placeholderTextColor={theme.TextBlackOpa60}
-                                value={mdp} // 1. Affiche ce qui est dans la mémoire
+                                value={mdp} 
                                 onChangeText={(val) => {
                                     setMdp(val);
                                     if (val.trim()) setErrorMessage("");
