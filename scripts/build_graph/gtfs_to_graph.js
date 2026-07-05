@@ -123,13 +123,18 @@ function streamStopTimes(filepath, tripIndex, nodes) {
             const duration = arrSec - depSec;
 
             if (duration >= 0 && duration <= 7200) {
-              const key = `${lastStop.stopId}||${stopId}||${tripInfo.route_id}||${tripInfo.route_short_name}`;
+              // Cle par sens (direction_id) : une arete A->B appartient a un seul
+              // sens, on ne fusionne donc jamais les deux directions.
+              const key = `${lastStop.stopId}||${stopId}||${tripInfo.route_id}||${tripInfo.direction_id}`;
               if (!edgeAccum[key]) {
                 edgeAccum[key] = {
                   from:             lastStop.stopId,
                   to:               stopId,
                   route_id:         tripInfo.route_id,
-                  route_short_name: tripInfo.route_short_name,
+                  route_short_name: tripInfo.route_short_name, // vrai n° de ligne
+                  route_long_name:  tripInfo.route_long_name,
+                  headsign:         tripInfo.headsign,          // terminus = direction
+                  direction_id:     tripInfo.direction_id,
                   mode:             tripInfo.mode,
                   color:            tripInfo.color,
                   text_color:       tripInfo.text_color,
@@ -188,45 +193,59 @@ async function main() {
 
   // Index routes + trips
   console.log("\nIndex routes & trips...");
+  // IMPORTANT : le vrai numero de ligne ("1", "8", "A") est dans routes.txt
+  // (route_short_name / route_long_name), PAS dans trips.txt. L'ancienne version
+  // lisait t.route_short_name (colonne inexistante dans trips) et retombait donc
+  // sur trip_headsign -> le champ "route_short_name" du graphe contenait en fait
+  // le terminus. On capte ici la vraie identite de ligne depuis routes.txt.
   const routeIndex = {};
   for (const r of rawRoutes) {
     routeIndex[r.route_id] = {
-      route_type:  parseInt(r.route_type, 10) || 3,
-      color:       parseColor(r.route_color),
-      text_color:  parseColor(r.route_text_color),
+      route_type:       parseInt(r.route_type, 10) || 3,
+      route_short_name: (r.route_short_name || "").trim(),
+      route_long_name:  (r.route_long_name  || "").trim(),
+      color:            parseColor(r.route_color),
+      text_color:       parseColor(r.route_text_color),
     };
   }
 
-  // Terminus majoritaire par route_id
-  // On compte les occurrences de chaque trip_headsign par route_id
-  // et on garde le plus frequent pour avoir un terminus coherent
-  const routeHeadsignCount = {};
+  // Terminus (headsign) majoritaire par (route_id, direction_id).
+  // Le direction_id (0/1) identifie le sens ; le headsign majoritaire de ce sens
+  // donne le terminus a afficher ("Direction Chateau de Vincennes"), robuste aux
+  // trajets partiels (short-turns) qui ont un headsign minoritaire.
+  const dirHeadsignCount = {};
   for (const t of rawTrips) {
-    const rid      = t.route_id;
-    const headsign = (t.route_short_name || t.trip_headsign || "").trim();
-    if (!headsign) continue;
-    if (!routeHeadsignCount[rid]) routeHeadsignCount[rid] = {};
-    routeHeadsignCount[rid][headsign] = (routeHeadsignCount[rid][headsign] || 0) + 1;
+    const rid = t.route_id;
+    const dir = (t.direction_id || "").trim();
+    const hs  = (t.trip_headsign || "").trim();
+    if (!hs) continue;
+    ((dirHeadsignCount[rid] ??= {})[dir] ??= {});
+    dirHeadsignCount[rid][dir][hs] = (dirHeadsignCount[rid][dir][hs] || 0) + 1;
   }
-
-  // Pour chaque route, on prend le terminus le plus frequent
-  const routeMajorityHeadsign = {};
-  for (const [rid, counts] of Object.entries(routeHeadsignCount)) {
-    routeMajorityHeadsign[rid] = Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])[0][0];
+  const dirHeadsign = {};
+  for (const rid of Object.keys(dirHeadsignCount)) {
+    dirHeadsign[rid] = {};
+    for (const dir of Object.keys(dirHeadsignCount[rid])) {
+      dirHeadsign[rid][dir] = Object.entries(dirHeadsignCount[rid][dir])
+        .sort((a, b) => b[1] - a[1])[0][0];
+    }
   }
 
   const tripIndex = {};
   for (const t of rawTrips) {
-    const ri    = routeIndex[t.route_id] || { route_type: 3, color: null, text_color: null };
-    const rtype = ri.route_type;
+    const ri    = routeIndex[t.route_id] || {};
+    const rtype = ri.route_type ?? 3;
+    const dir   = (t.direction_id || "").trim();
     tripIndex[t.trip_id] = {
       route_id:         t.route_id,
-      // On garde le headsign du trip specifique pour avoir la bonne direction
-      route_short_name: (t.trip_headsign || t.route_short_name || "").trim(),
+      route_short_name: ri.route_short_name || "",                 // vrai n° de ligne
+      route_long_name:  ri.route_long_name  || "",
+      direction_id:     dir,
+      headsign:         dirHeadsign[t.route_id]?.[dir]             // terminus du sens
+                        || (t.trip_headsign || "").trim(),
       mode:             ROUTE_TYPE_LABEL[rtype] || "bus",
-      color:            ri.color,
-      text_color:       ri.text_color,
+      color:            ri.color || null,
+      text_color:       ri.text_color || null,
     };
   }
   console.log(`   -> ${Object.keys(tripIndex).length} trips indexes`);
@@ -248,7 +267,10 @@ async function main() {
     weight:           Math.round(e.total / e.count),
     mode:             e.mode,
     route_id:         e.route_id,
-    route_short_name: e.route_short_name,
+    route_short_name: e.route_short_name, // vrai n° de ligne ("1", "8", "A")
+    route_long_name:  e.route_long_name,
+    headsign:         e.headsign,         // terminus du sens (direction)
+    direction_id:     e.direction_id,
     color:            e.color,
     text_color:       e.text_color,
   }));
@@ -279,6 +301,9 @@ async function main() {
         mode:             "transfer",
         route_id:         null,
         route_short_name: "correspondance",
+        route_long_name:  null,
+        headsign:         null,
+        direction_id:     null,
         color:            null,
         text_color:       null,
         wheelchair:       wc,

@@ -94,7 +94,7 @@
  *   findPathTimedByIds,
  *   findPathTimedArrivalByIds,
  *   findStopsByName
- * } = require("./dijkstra_timed");
+ * } = require("./back_path");
  *
  * // Départ à 08:30
  * const result = findPathTimed(
@@ -145,26 +145,12 @@
  * );
  *
  * ---------------------------------------------------------------------------
- * Utilisation CLI
+ * Utilisation CLI (mainClc)
  * ---------------------------------------------------------------------------
  *
- * Départ à une heure donnée :
- *
- *   node dijkstra_timed.js "Chatelet" "Nation" --time 08:30
- *
- * Arriver avant une heure :
- *
- *   node dijkstra_timed.js "Chatelet" "Nation" --arrive 09:00
- *
- * Version PMR :
- *
- *   node dijkstra_timed.js "Chatelet" "Nation" --time 08:30 --wheelchair
- *
- * Routage sans ambiguïté (IDs déjà connus) :
- *
- *   node dijkstra_timed.js --fromId STOP_A --toId STOP_B --time 08:30
- *
- *   node dijkstra_timed.js --fromId STOP_A --toId STOP_B --arrive 09:00
+ * IMPORTANT : si departureTime ET arrivalTime sont fournis en même temps,
+ * departureTime est TOUJOURS prioritaire (arrivalTime est alors ignoré),
+ * que la recherche se fasse par nom ou par ID.
  */
 
 // ─── MinHeap ──────────────────────────────────────────────────────────────────
@@ -399,6 +385,16 @@ function nextDeparture(departures, afterSec) {
     return departures[lo] >= afterSec ? departures[lo] : null;
 }
 
+// ─── Lookup des departs pour une arete a un arret ─────────────────────────────
+// Cle canonique (nouveau format) : route_id||direction_id.
+// Fallbacks pour rester compatible avec les anciens graphes/timetables :
+//   - route_id||route_short_name (ancien format ou route_short_name = headsign)
+//   - route_id seul (tout premier format)
+function lookupDepartures(stopTimes, edge) {
+    if (!stopTimes) return null;
+    return stopTimes[`${edge.route_id}||${edge.direction_id ?? ""}`] || stopTimes[`${edge.route_id}||${edge.route_short_name || ""}`] || stopTimes[edge.route_id] || null;
+}
+
 // ─── Construction liste d'adjacence ───────────────────────────────────────────
 function buildAdjacency(graph) {
     const adj = {};
@@ -411,10 +407,12 @@ function buildAdjacency(graph) {
 
     return adj;
 }
+
 // ─── Recherche de chemin (heure de depart ou d'arrivee) ────────────────────────
 function findPathFinal(graph, timetable, fromName, toName, options = {}) {
     const { departureTime = null, arrivalTime = null, wheelchair = false } = options;
 
+    // departureTime est toujours prioritaire si les deux sont fournis.
     if (departureTime) {
         return findPathTimed(graph, timetable, fromName, toName, { departureTime, wheelchair });
     }
@@ -509,14 +507,32 @@ function buildSteps(pathNodes, nodeMap) {
 
         if (!hop) continue;
 
-        if (!current || current.route_id !== hop.route_id || current.mode !== hop.mode) {
+        const hopDirectionId = hop.direction_id ?? null;
+
+        // On ouvre une nouvelle étape si la ligne, le mode OU l'embranchement
+        // (direction_id) change. Avant ce fix, seul route_id/mode étaient
+        // testés : deux hops de la même ligne mais de branches différentes
+        // (terminus différents) étaient fusionnés dans une seule étape, qui
+        // gardait le terminus du tout premier hop -> mauvais embranchement
+        // affiché dès que la ligne fourche.
+        if (!current || current.route_id !== hop.route_id || current.mode !== hop.mode || current.direction_id !== hopDirectionId) {
             if (current) steps.push(current);
+            
             current = {
                 type: hop.mode === "transfer" ? "correspondance" : "trajet",
                 mode: hop.mode,
                 route_id: hop.route_id || null,
-                route_short_name: hop.route_short_name || null,
-                direction_label: hop.route_short_name || to.name || null,
+                route_short_name: hop.route_short_name || null, // n° de ligne ("1", "8")
+                route_long_name: hop.route_long_name || null,
+                direction_id: hopDirectionId,
+                // Terminus reel du sens. Dans ce jeu de donnees, route_short_name
+                // contient en fait le vrai nom de terminus (ex: "Mairie d'Ivry",
+                // "Aeroport d'Orly"), et non un numero de ligne comme on le
+                // pensait au depart. Le champ headsign, lui, s'est avere peu
+                // fiable (il donnait "Porte d'Italie" alors que le vrai terminus
+                // de la branche est "Mairie d'Ivry") : on le relegue en simple
+                // fallback, derriere route_short_name.
+                direction_label: hop.route_short_name || hop.headsign || to.name || null,
                 color: hop.color || null,
                 text_color: hop.text_color || null,
                 from: { id: from.id, name: from.name },
@@ -534,6 +550,14 @@ function buildSteps(pathNodes, nodeMap) {
         current.travel_sec += hop.travelSec || 0;
         current.nb_stops += 1;
         current.stops.push({ id: to.id, name: to.name, time: formatTime(pathNodes[i + 1].currentSec) });
+
+        // Si on n'avait ni route_short_name ni headsign a la creation de
+        // l'etape, on affine le terminus au fil de l'eau avec le dernier
+        // arret connu de cette meme branche (direction_id inchangee tant
+        // qu'on est dans ce bloc).
+        if (!hop.route_short_name && !hop.headsign) {
+            current.direction_label = current.direction_label || to.name;
+        }
     }
 
     if (current) steps.push(current);
@@ -560,7 +584,7 @@ function calculateEcoMetricsForSteps(steps, nodeMap) {
     const nodeMapById = Object.fromEntries(nodeMap.nodes.map((node) => [node.id, node]));
 
     for (const step of steps) {
-        const fromNode = nodeMapById[step.from.id]; 
+        const fromNode = nodeMapById[step.from.id];
         const toNode = nodeMapById[step.to.id];
 
         if (isWalkMode(step.mode)) {
@@ -627,8 +651,7 @@ function dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelc
             // Pour les trajets en vehicule, on cherche le prochain depart
             if (edge.mode !== "transfer") {
                 const stopTimes = timetable[id];
-                const timetableKey = `${edge.route_id}||${edge.route_short_name || ""}`;
-                const routeDeps = stopTimes ? stopTimes[timetableKey] || stopTimes[edge.route_id] : null;
+                const routeDeps = lookupDepartures(stopTimes, edge);
 
                 const nextDep = nextDeparture(routeDeps, currentSec);
 
@@ -651,6 +674,9 @@ function dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelc
                         mode: edge.mode,
                         route_id: edge.route_id,
                         route_short_name: edge.route_short_name,
+                        route_long_name: edge.route_long_name,
+                        headsign: edge.headsign,
+                        direction_id: edge.direction_id,
                         color: edge.color,
                         text_color: edge.text_color,
                         boardingSec: boardSec,
@@ -699,7 +725,7 @@ function dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelc
 }
 
 // ─── findPathTimed ────────────────────────────────────────────────────────────
-function findPathTimed(graph = graph, timetable = timetable, fromName, toName, options = {}) {
+function findPathTimed(graph, timetable, fromName, toName, options = {}) {
     const { departureTime = "08:00", wheelchair = false } = options;
 
     const nodeMap = {};
@@ -723,12 +749,6 @@ function findPathTimed(graph = graph, timetable = timetable, fromName, toName, o
     const fromIds = fromCandidates.map((s) => s.id);
     const toIds = new Set(toCandidates.map((s) => s.id));
     const startSec = timeToSeconds(departureTime);
-
-    /*
-    console.log(`Depart  : ${fromCandidates.length} arret(s) pour "${fromName}"`);
-    console.log(`Arrivee : ${toCandidates.length} arret(s) pour "${toName}"`);
-    console.log(`Heure   : ${departureTime}\n`);
-    */
 
     const adj = buildAdjacency(graph);
     return dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelchair);
@@ -761,7 +781,6 @@ function findPathTimedByIds(graph, timetable, fromId, toId, options = {}) {
     return dijkstraTimed(adj, nodeMap, timetable, fromIds, new Set(toIds), startSec, wheelchair);
 }
 
-// ─── Exports ──────────────────────────────────────────────────────────────────
 // ─── Recherche binaire : dernier depart <= beforeSec ──────────────────────────
 function lastDeparture(departures, beforeSec) {
     if (!departures || departures.length === 0) return null;
@@ -777,7 +796,7 @@ function lastDeparture(departures, beforeSec) {
 
 // ─── Dijkstra inverse (heure d'arrivee souhaitee) ─────────────────────────────
 function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSec, wheelchair) {
-    // Construction du graphe inverse : to -> from
+    // Graphe inverse
     const adjReverse = {};
     for (const id of Object.keys(nodeMap)) adjReverse[id] = [];
     for (const id of Object.keys(adj)) {
@@ -787,164 +806,99 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
         }
     }
 
-    // ── Recherche multi-labels (front de Pareto cout / marge horaire) ─────────
-    // AVANT ce fix, chaque noeud ne gardait qu'UN seul etat : le meilleur cout,
-    // systematiquement associe au tout dernier depart compatible sur chaque
-    // arete. Cela pouvait ecarter un chemin partant un peu plus tot mais
-    // debouchant, plus en amont, sur une bien meilleure correspondance (temps
-    // ou CO2) — la recherche par heure d'arrivee avait donc structurellement
-    // moins de marge d'exploration que la recherche par heure de depart.
-    // On garde maintenant, par noeud, plusieurs etats non domines : un etat A
-    // domine un etat B si A est a la fois moins cher ET a une contrainte
-    // horaire au moins aussi souple (A.cost <= B.cost et A.currentSec >=
-    // B.currentSec, avec au moins une inegalite stricte).
-    const MAX_LABELS_PER_NODE = 4; // borne pour rester praticable sur ~36k sommets
-    const labels = {}; // id -> [{ cost, currentSec }] non domines
-    const prevOf = {}; // "id::currentSec" -> { parentKey, hop }
-    const settled = new Set();
+    // dist[id] = heure de depart la plus tardive possible
+    const dist = {};
+    const prev = {};
+    const visited = new Set();
 
-    const labelKey = (id, currentSec) => id + "::" + currentSec;
+    for (const id of Object.keys(nodeMap)) dist[id] = -Infinity;
 
-    function isDominated(candidate, existing) {
-        return existing.some((l) => l.cost <= candidate.cost && l.currentSec >= candidate.currentSec && (l.cost < candidate.cost || l.currentSec > candidate.currentSec));
-    }
-
-    function tryAddLabel(id, candidate) {
-        const existing = labels[id] || (labels[id] = []);
-        if (isDominated(candidate, existing)) return false;
-        for (let i = existing.length - 1; i >= 0; i--) {
-            const l = existing[i];
-            if (candidate.cost <= l.cost && candidate.currentSec >= l.currentSec && (candidate.cost < l.cost || candidate.currentSec > l.currentSec)) {
-                existing.splice(i, 1);
-            }
-        }
-        existing.push(candidate);
-        if (existing.length > MAX_LABELS_PER_NODE) {
-            existing.sort((a, b) => a.cost - b.cost);
-            existing.length = MAX_LABELS_PER_NODE;
-        }
-        return true;
-    }
-
-    const heap = new MinHeap(); // on utilise -heure pour simuler un MaxHeap
+    const heap = new MinHeap(); // cost = -heure, pour simuler un MaxHeap
 
     for (const id of toIds) {
         if (wheelchair && nodeMap[id]?.wheelchair === false) continue;
-        tryAddLabel(id, { cost: 0, currentSec: arrivalSec });
-        heap.push({ cost: 0, id, currentSec: arrivalSec, walkStreakSec: 0 });
+        dist[id] = arrivalSec;
+        heap.push({ cost: -arrivalSec, id, currentSec: arrivalSec });
     }
 
-    let bestFromKey = null;
+    let bestFromId = null;
 
     while (heap.size > 0) {
-        const { cost, id, currentSec, walkStreakSec } = heap.pop();
-        const key = labelKey(id, currentSec);
+        const { id, currentSec } = heap.pop();
 
-        if (settled.has(key)) continue;
-        // L'etat peut avoir ete evince (domine) par un meilleur label depuis
-        // son ajout au tas : suppression paresseuse, on l'ignore simplement.
-        const stillValid = (labels[id] || []).some((l) => l.currentSec === currentSec && l.cost === cost);
-        if (!stillValid) continue;
-        settled.add(key);
+        if (visited.has(id)) continue;
+        visited.add(id);
 
         if (fromIds.has(id)) {
-            bestFromKey = key;
+            bestFromId = id;
             break;
         }
 
         for (const edge of adjReverse[id] || []) {
-            const edgeIsWalk = isWalkMode(edge.mode);
-            const alpha = SMARTFLOW_DEFAULT_ALPHA;
-            const beta = SMARTFLOW_DEFAULT_BETA;
             if (wheelchair && edge.wheelchair === false) continue;
             if (wheelchair && nodeMap[edge.to]?.wheelchair === false) continue;
 
             let boardSec;
 
-            if (edge.mode !== "transfer") {
-                // On cherche le dernier depart depuis edge.to qui permet d'arriver a temps
+            if (!isWalkMode(edge.mode)) {
                 const stopTimes = timetable[edge.to];
-                const timetableKey = `${edge.route_id}||${edge.route_short_name || ""}`;
-                const routeDeps = stopTimes ? stopTimes[timetableKey] || stopTimes[edge.route_id] : null;
-                // Le train doit partir au plus tard a currentSec - travelSec
+                const routeDeps = lookupDepartures(stopTimes, edge);
                 const latestDep = lastDeparture(routeDeps, currentSec - edge.weight);
                 if (latestDep === null) continue;
                 boardSec = latestDep;
             } else {
-                // Transfer : on remonte simplement du temps de correspondance
                 boardSec = currentSec - edge.weight;
-                // Avant minuit (temps negatif), aucune donnee horaire ne couvre ce
-                // depart dans ce modele mono-journee : on ecarte l'arete plutot que
-                // de propager un temps de depart negatif/corrompu.
                 if (boardSec < 0) continue;
             }
 
-            // Meme logique que dans dijkstraTimed : plafonner la marche cumulee,
-            // pas arete par arete (voir commentaire equivalent plus haut).
-            const newWalkStreak = edgeIsWalk ? walkStreakSec + edge.weight : 0;
-            if (edgeIsWalk && newWalkStreak > MAX_TRANSFER_SEC) continue;
-
-            const travelSec = edge.weight;
-            // nodeMap[edge.to] / nodeMap[id] : edge a deja ete retourne (from/to
-            // inverses) lors de la construction d'adjReverse, donc "edge.to" ici
-            // designe bien le point de depart reel du troncon et "id" son arrivee.
-            const edgeCost = computeSmartflowEdgeCost(edge, nodeMap[edge.to], nodeMap[id], 0, travelSec, alpha, beta);
-            const newCost = cost + edgeCost;
-            const candidate = { cost: newCost, currentSec: boardSec };
-
-            if (tryAddLabel(edge.to, candidate)) {
-                prevOf[labelKey(edge.to, boardSec)] = {
-                    parentKey: key,
+            if (boardSec > dist[edge.to]) {
+                dist[edge.to] = boardSec;
+                prev[edge.to] = {
+                    nodeId: id,
                     hop: {
                         mode: edge.mode,
                         route_id: edge.route_id,
                         route_short_name: edge.route_short_name,
+                        route_long_name: edge.route_long_name,
+                        headsign: edge.headsign,
+                        direction_id: edge.direction_id,
                         color: edge.color,
                         text_color: edge.text_color,
                         boardingSec: boardSec,
                         waitSec: 0,
                         travelSec: edge.weight,
                     },
+                    currentSec: boardSec,
                 };
                 heap.push({ cost: -boardSec, id: edge.to, currentSec: boardSec });
             }
         }
     }
 
-    if (!bestFromKey) return null;
+    if (!bestFromId) return null;
 
-    // Reconstruction du chemin en remontant la chaine de labels (depart -> arrivee)
-    const rawPath = []; // [ { id, currentSec, hop } ]
-    let curKey = bestFromKey;
-    while (prevOf[curKey]) {
-        const sepIdx = curKey.lastIndexOf("::");
-        const curId = curKey.slice(0, sepIdx);
-        const curSec = Number(curKey.slice(sepIdx + 2));
-        const { parentKey, hop } = prevOf[curKey];
-        rawPath.push({ id: curId, currentSec: curSec, hop });
-        curKey = parentKey;
-    }
-    {
-        const sepIdx = curKey.lastIndexOf("::");
-        const curId = curKey.slice(0, sepIdx);
-        const curSec = Number(curKey.slice(sepIdx + 2));
-        rawPath.push({ id: curId, currentSec: curSec, hop: null });
-    }
+    const departSec = dist[bestFromId];
 
-    // rawPath est dans le bon sens : depart en premier, arrivee en dernier
-    const pathNodes = rawPath.map((n, i) => ({
+    // Reconstruction dans le bon sens (depart -> arrivee)
+    // prev[] avance vers la destination, donc on PUSH (pas unshift) en marchant
+    // depuis la source : le tableau est deja dans l'ordre chronologique.
+    const rawPath = [];
+    let current = bestFromId;
+    while (prev[current]) {
+        const { nodeId, hop } = prev[current];
+        rawPath.push({ id: current, hopToNext: hop });
+        current = nodeId;
+    }
+    rawPath.push({ id: current, hopToNext: null }); // current === bestToId (arrivee)
+
+    const pathNodes = rawPath.map((n) => ({
         id: n.id,
-        currentSec: n.currentSec,
-        hopToNext: i < rawPath.length - 1 ? rawPath[i].hop : null,
+        currentSec: dist[n.id] !== -Infinity ? dist[n.id] : arrivalSec,
+        hopToNext: n.hopToNext,
     }));
 
-    // Calcul des heures d'arrivee reelles et des temps d'attente.
-    // Le "currentSec" issu du label est une heure de DEPART (le moment ou il
-    // faut partir pour tenir la correspondance suivante) — ce n'est PAS
-    // l'heure d'ARRIVEE reelle a ce noeud, ces deux temps peuvent differer
-    // (c'est precisement l'attente). On recalcule ici la vraie heure d'arrivee
-    // a chaque noeud intermediaire a partir du hop precedent (boardingSec +
-    // travelSec), avant de calculer le temps d'attente du hop suivant.
+    // Recalcule l'heure d'arrivee reelle a chaque noeud intermediaire a partir
+    // du hop precedent (dist[] contenait une heure de *depart*, pas d'arrivee).
     for (let i = 1; i < pathNodes.length; i++) {
         const prevHop = pathNodes[i - 1].hopToNext;
         if (prevHop) {
@@ -952,15 +906,15 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
         }
     }
 
+    // Temps d'attente reel = heure d'embarquement choisie - heure d'arrivee au noeud
     for (let i = 0; i < pathNodes.length - 1; i++) {
         const hop = pathNodes[i].hopToNext;
-        if (hop && hop.mode !== "transfer") {
+        if (hop && !isWalkMode(hop.mode)) {
             hop.waitSec = Math.max(0, hop.boardingSec - pathNodes[i].currentSec);
         }
     }
 
     const steps = buildSteps(pathNodes, nodeMap);
-    const departSec = pathNodes[0].currentSec;
     const totalDuration = arrivalSec - departSec;
     const nbCorrespondances = steps.filter((s) => s.type === "correspondance").length;
 
@@ -1013,10 +967,6 @@ function findPathTimedArrival(graph, timetable, fromName, toName, options = {}) 
     const toIds = toCandidates.map((s) => s.id);
     const arrivalSec = timeToSeconds(arrivalTime);
 
-    console.log(`Depart  : ${fromCandidates.length} arret(s) pour "${fromName}"`);
-    console.log(`Arrivee : ${toCandidates.length} arret(s) pour "${toName}"`);
-    console.log(`Arriver avant : ${arrivalTime}\n`);
-
     const adj = buildAdjacency(graph);
     return dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSec, wheelchair);
 }
@@ -1063,7 +1013,7 @@ function buildRawPathWithCoordinates(rawPath, graph) {
 }
 
 function getStepDirectionLabel(step) {
-    return step?.direction_label || step?.route_short_name || step?.to?.name || step?.from?.name || null;
+    return step?.direction_label || step?.to?.name || step?.from?.name || null;
 }
 
 // ─── CLI ──────────────────────────────────────────────────────────────────────
@@ -1080,8 +1030,12 @@ function getStepDirectionLabel(step) {
  * @param {string|null} [params.arrivalTime]
  * @param {boolean} [params.wheelchair]
  * @param {boolean} [params.debug]
+ *
+ * Regle de priorite : si departureTime ET arrivalTime sont fournis en meme
+ * temps, departureTime gagne toujours (arrivalTime est ignore), que la
+ * recherche se fasse par nom (fromName/toName) ou par ID (fromId/toId).
  */
-export function mainClc({ graph, timetable, fromName, toName, fromId = null, toId = null, departureTime = null, arrivalTime = null, wheelchair = false, debug = false }) {
+function mainClc({ graph, timetable, fromName, toName, fromId = null, toId = null, departureTime = null, arrivalTime = null, wheelchair = false, debug = false }) {
     if (!departureTime && !arrivalTime) {
         throw new Error("Vous devez fournir une heure de départ (departureTime) ou d'arrivée (arrivalTime)");
     }
@@ -1090,25 +1044,27 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
     let result;
 
     if (fromId && toId) {
-        if (arrivalTime) {
-            result = findPathTimedArrivalByIds(graph, timetable, fromId, toId, {
-                arrivalTime,
-                wheelchair,
-            });
-        } else {
+        if (departureTime) {
+            // departureTime gagne toujours si present, meme si arrivalTime est aussi fourni
             result = findPathTimedByIds(graph, timetable, fromId, toId, {
                 departureTime,
                 wheelchair,
             });
+        } else {
+            result = findPathTimedArrivalByIds(graph, timetable, fromId, toId, {
+                arrivalTime,
+                wheelchair,
+            });
         }
-    } else if (arrivalTime) {
-        result = findPathTimedArrival(graph, timetable, fromName, toName, {
-            arrivalTime,
+    } else if (departureTime) {
+        // departureTime gagne toujours si present, meme si arrivalTime est aussi fourni
+        result = findPathTimed(graph, timetable, fromName, toName, {
+            departureTime,
             wheelchair,
         });
     } else {
-        result = findPathTimed(graph, timetable, fromName, toName, {
-            departureTime,
+        result = findPathTimedArrival(graph, timetable, fromName, toName, {
+            arrivalTime,
             wheelchair,
         });
     }
@@ -1182,8 +1138,12 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
             if (step.type === "correspondance") {
                 console.log(`  [${displayIndex++}] Correspondance - ${step.from.name} -> ${step.to.name} (${step.duration_formatted})`);
             } else {
-                const directionLabel = getStepDirectionLabel(step) || step.mode;
-                const ligne = directionLabel ? `Direction <${directionLabel}>` : step.mode;
+                // "direction {terminus}" seulement quand on a un vrai headsign
+                // (terminus confirme de la ligne). Sinon, direction_label est
+                // juste retombe sur le dernier arret connu du troncon (pas un
+                // vrai terminus) : on l'affiche seul, sans le mot "direction",
+                // pour ne pas laisser croire que c'est le terminus officiel.
+                const ligne = step.direction_label ? `direction ${step.direction_label}` : step.to.name;
 
                 if (step.wait_sec > 0) {
                     console.log(`  [${displayIndex++}] Attente a ${step.from.name} - ${step.wait_formatted}`);
@@ -1196,3 +1156,6 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
 
     return formatted;
 }
+
+// ─── Exports ──────────────────────────────────────────────────────────────────
+export { mainClc, findPathFinal, findPathTimed, findPathTimedArrival, findPathTimedByIds, findPathTimedArrivalByIds, findStopsByName, buildAdjacency, buildUndirectedAdjacency, getConnectedComponents, isConnected, buildNetworkTree, calculateEcoMetricsForSteps, computeSmartflowEdgeCost };
