@@ -514,7 +514,20 @@ function buildSteps(pathNodes, nodeMap) {
 
         if (!hop) continue;
 
-        if (!current || current.route_id !== hop.route_id || current.mode !== hop.mode) {
+        const hopDirectionId = hop.direction_id ?? null;
+
+        // On ouvre une nouvelle étape si la ligne, le mode OU l'embranchement
+        // (direction_id) change. Avant ce fix, seul route_id/mode étaient
+        // testés : deux hops de la même ligne mais de branches différentes
+        // (terminus différents) étaient fusionnés dans une seule étape, qui
+        // gardait le terminus du tout premier hop -> mauvais embranchement
+        // affiché dès que la ligne fourche.
+        if (
+            !current ||
+            current.route_id !== hop.route_id ||
+            current.mode !== hop.mode ||
+            current.direction_id !== hopDirectionId
+        ) {
             if (current) steps.push(current);
             current = {
                 type: hop.mode === "transfer" ? "correspondance" : "trajet",
@@ -522,10 +535,15 @@ function buildSteps(pathNodes, nodeMap) {
                 route_id: hop.route_id || null,
                 route_short_name: hop.route_short_name || null, // n° de ligne ("1", "8")
                 route_long_name: hop.route_long_name || null,
-                direction_id: hop.direction_id ?? null,
-                // Terminus du sens (nouveau format). Retombe sur route_short_name
-                // pour les anciens graphes ou ce champ contenait deja le terminus.
-                direction_label: hop.headsign || hop.route_short_name || to.name || null,
+                direction_id: hopDirectionId,
+                // Terminus reel du sens. Dans ce jeu de donnees, route_short_name
+                // contient en fait le vrai nom de terminus (ex: "Mairie d'Ivry",
+                // "Aeroport d'Orly"), et non un numero de ligne comme on le
+                // pensait au depart. Le champ headsign, lui, s'est avere peu
+                // fiable (il donnait "Porte d'Italie" alors que le vrai terminus
+                // de la branche est "Mairie d'Ivry") : on le relegue en simple
+                // fallback, derriere route_short_name.
+                direction_label: hop.route_short_name || hop.headsign || to.name || null,
                 color: hop.color || null,
                 text_color: hop.text_color || null,
                 from: { id: from.id, name: from.name },
@@ -543,6 +561,14 @@ function buildSteps(pathNodes, nodeMap) {
         current.travel_sec += hop.travelSec || 0;
         current.nb_stops += 1;
         current.stops.push({ id: to.id, name: to.name, time: formatTime(pathNodes[i + 1].currentSec) });
+
+        // Si on n'avait ni route_short_name ni headsign a la creation de
+        // l'etape, on affine le terminus au fil de l'eau avec le dernier
+        // arret connu de cette meme branche (direction_id inchangee tant
+        // qu'on est dans ce bloc).
+        if (!hop.route_short_name && !hop.headsign) {
+            current.direction_label = current.direction_label || to.name;
+        }
     }
 
     if (current) steps.push(current);
@@ -993,7 +1019,7 @@ function buildRawPathWithCoordinates(rawPath, graph) {
 }
 
 function getStepDirectionLabel(step) {
-    return step?.direction_label || step?.route_short_name || step?.to?.name || step?.from?.name || null;
+    return step?.direction_label || step?.to?.name || step?.from?.name || null;
 }
 
 // ─── CLI ──────────────────────────────────────────────────────────────────────
@@ -1115,11 +1141,14 @@ function mainClc({ graph, timetable, fromName, toName, fromId = null, toId = nul
             if (step.type === "correspondance") {
                 console.log(`  [${displayIndex++}] Correspondance - ${step.from.name} -> ${step.to.name} (${step.duration_formatted})`);
             } else {
-                // n° de ligne + terminus du sens ("Ligne 1 dir. Château de Vincennes")
-                const line = step.route_short_name ? `Ligne ${step.route_short_name}` : step.mode;
-                const dir = step.direction_label && step.direction_label !== step.route_short_name
-                    ? ` dir. ${step.direction_label}` : "";
-                const ligne = `${line}${dir}`;
+                // "direction {terminus}" seulement quand on a un vrai headsign
+                // (terminus confirme de la ligne). Sinon, direction_label est
+                // juste retombe sur le dernier arret connu du troncon (pas un
+                // vrai terminus) : on l'affiche seul, sans le mot "direction",
+                // pour ne pas laisser croire que c'est le terminus officiel.
+                const ligne = step.direction_label
+                    ? `direction ${step.direction_label}`
+                    : step.to.name;
 
                 if (step.wait_sec > 0) {
                     console.log(`  [${displayIndex++}] Attente a ${step.from.name} - ${step.wait_formatted}`);
