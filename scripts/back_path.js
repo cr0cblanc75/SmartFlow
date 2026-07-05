@@ -1163,4 +1163,3 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
 
     return formatted;
 }
-module.exports = { mainClc, findPathTimed, findPathTimedArrival, findPathTimedByIds, findPathTimedArrivalByIds, findStopsByName, buildAdjacency, isConnected, getConnectedComponents, buildNetworkTree };
