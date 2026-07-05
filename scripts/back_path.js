@@ -518,6 +518,7 @@ function buildSteps(pathNodes, nodeMap) {
                 mode: hop.mode,
                 route_id: hop.route_id || null,
                 route_short_name: hop.route_short_name || null,
+                direction_label: hop.route_short_name || to.name || null,
                 color: hop.color || null,
                 text_color: hop.text_color || null,
                 from: { id: from.id, name: from.name },
@@ -1057,6 +1058,11 @@ function buildRawPathWithCoordinates(rawPath, graph) {
         };
     });
 }
+
+function getStepDirectionLabel(step) {
+    return step?.direction_label || step?.route_short_name || step?.to?.name || step?.from?.name || null;
+}
+
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 
 /**
@@ -1134,7 +1140,8 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
 
             return {
                 type: "transport",
-                line: step.to.name || null,
+                line: getStepDirectionLabel(step),
+                direction: getStepDirectionLabel(step),
                 mode: step.mode,
                 from: step.from.name,
                 to: step.to.name,
@@ -1170,7 +1177,8 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
             if (step.type === "correspondance") {
                 console.log(`  [${displayIndex++}] Correspondance - ${step.from.name} -> ${step.to.name} (${step.duration_formatted})`);
             } else {
-                const ligne = step.to ? `Direction <${step.to.name}>` : step.mode;
+                const directionLabel = getStepDirectionLabel(step) || step.mode;
+                const ligne = directionLabel ? `Direction <${directionLabel}>` : step.mode;
 
                 if (step.wait_sec > 0) {
                     console.log(`  [${displayIndex++}] Attente a ${step.from.name} - ${step.wait_formatted}`);
