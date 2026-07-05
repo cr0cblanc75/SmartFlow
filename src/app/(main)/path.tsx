@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import CO2Button from "@/assets/CO2_icon.svg";
 import ClockButton from "@/assets/Clock.svg";
 import RefreshButton from "@/assets/Refresh_icon.svg";
+import HandiButton from "@/assets/Handi_Icon.svg";
 
 import { PathFrame } from "@/components/path/path";
 
@@ -68,11 +69,12 @@ function buildPathFrames(steps: Step[]) {
 export default function PathScreen() {
     const theme = useTheme();
     const router = useRouter();
-    const { Depart, Arrivee, timeDep, timeArr } = useLocalSearchParams<{
+    const { Depart, Arrivee, timeDep, timeArr, wheelchair } = useLocalSearchParams<{
         Depart: string;
         Arrivee: string;
         timeDep: string;
         timeArr?: string;
+        wheelchair: string;
     }>();
 
     const [pathFinded, setPathFinded] = useState<PathResult | any>(null);
@@ -95,11 +97,12 @@ export default function PathScreen() {
             toName: Arrivee,
             departureTime: formatedTimeDep,
             arrivalTime: formatedTimeDep === formatedTimeArr ? null : formatedTimeArr,
+            wheelchair: wheelchair === "true",
             debug: true,
         });
 
         if (res == null) {
-            console.log("No path");
+            //console.log("No path");
             setPathFinded(0);
             return;
         }
@@ -124,7 +127,7 @@ export default function PathScreen() {
     };
 
     const ETAco2 = "203,5g";
-    const ETAtime = pathFinded === 0 ? "Erreur, veuillez réessayer" : (pathFinded?.totalDuration ?? "chargement ...");
+    const ETAtime = pathFinded === 0 ? "Pas de chemin" : (pathFinded?.totalDuration ?? "chargement ...");
     const frames = pathFinded ? buildPathFrames(pathFinded.steps) : [];
 
     const mapRef = useRef<MapRef>(null);
@@ -212,6 +215,7 @@ export default function PathScreen() {
                                         <ThemedText style={[styles.recapDestinationText, { color: theme.MainTextBlack }]}>Départ </ThemedText>
                                         <ThemedText style={[styles.recapDestinationTime, { color: theme.MainTextBlack }]}> {TimeDepString}</ThemedText>
                                     </View>
+                                    {wheelchair === "true" ? <HandiButton width={25} height={25} color={theme.MainTextBlack} preserveAspectRatio="xMidYMid meet" /> : <></>}
                                     <View style={{ display: "flex", flexDirection: "row" }}>
                                         <ThemedText style={[styles.recapDestinationText, { color: theme.MainTextBlack }]}> Arrivé à</ThemedText>
                                         <ThemedText style={[styles.recapDestinationTime, { color: theme.MainTextBlack }]}> {TimeArrString}</ThemedText>
