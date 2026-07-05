@@ -525,14 +525,14 @@ function buildSteps(pathNodes, nodeMap) {
                 stops: [{ id: from.id, name: from.name, time: formatTime(pathNodes[i].currentSec) }],
                 departure_time: hop.boardingSec != null ? formatTime(hop.boardingSec) : null,
                 wait_sec: hop.waitSec || 0,
-                travel_sec: hop.travelSec || 0,
+                travel_sec: 0,
                 duration: 0,
-                nb_stops: 0,
             };
         }
 
         current.to = { id: to.id, name: to.name };
         current.duration += (hop.waitSec || 0) + (hop.travelSec || 0);
+        current.travel_sec += hop.travelSec || 0;
         current.nb_stops += 1;
         current.stops.push({ id: to.id, name: to.name, time: formatTime(pathNodes[i + 1].currentSec) });
     }
@@ -541,6 +541,7 @@ function buildSteps(pathNodes, nodeMap) {
 
     return steps.map((s) => ({
         ...s,
+        nb_stops: s.stops.length - 1,
         duration_formatted: formatDuration(s.duration),
         wait_formatted: s.wait_sec > 0 ? formatDuration(s.wait_sec) : null,
     }));
@@ -622,7 +623,9 @@ function dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelc
             // Pour les trajets en vehicule, on cherche le prochain depart
             if (edge.mode !== "transfer") {
                 const stopTimes = timetable[id];
-                const routeDeps = stopTimes ? stopTimes[edge.route_id] : null;
+                const timetableKey = `${edge.route_id}||${edge.route_short_name || ""}`;
+                const routeDeps = stopTimes ? (stopTimes[timetableKey] || stopTimes[edge.route_id]) : null;
+                
                 const nextDep = nextDeparture(routeDeps, currentSec);
 
                 // Pas de prochain depart -> on skip cette arete
@@ -846,6 +849,9 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
         }
 
         for (const edge of adjReverse[id] || []) {
+            const edgeIsWalk = isWalkMode(edge.mode);
+            const alpha = SMARTFLOW_DEFAULT_ALPHA;     
+            const beta = SMARTFLOW_DEFAULT_BETA;      
             if (wheelchair && edge.wheelchair === false) continue;
             if (wheelchair && nodeMap[edge.to]?.wheelchair === false) continue;
 
@@ -854,7 +860,8 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
             if (edge.mode !== "transfer") {
                 // On cherche le dernier depart depuis edge.to qui permet d'arriver a temps
                 const stopTimes = timetable[edge.to];
-                const routeDeps = stopTimes ? stopTimes[edge.route_id] : null;
+                const timetableKey = `${edge.route_id}||${edge.route_short_name || ""}`;
+                const routeDeps = stopTimes ? (stopTimes[timetableKey] || stopTimes[edge.route_id]) : null;
                 // Le train doit partir au plus tard a currentSec - travelSec
                 const latestDep = lastDeparture(routeDeps, currentSec - edge.weight);
                 if (latestDep === null) continue;
@@ -1070,7 +1077,7 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
             });
         }
     } else if (arrivalTime) {
-        result = findPathTimed(graph, timetable, fromName, toName, {
+        result = findPathTimedArrival(graph, timetable, fromName, toName, {
             arrivalTime,
             wheelchair,
         });
@@ -1109,7 +1116,7 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
 
             return {
                 type: "transport",
-                line: step.route_short_name || null,
+                line: step.to.name || null,
                 mode: step.mode,
                 from: step.from.name,
                 to: step.to.name,
@@ -1143,7 +1150,7 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
             if (step.type === "correspondance") {
                 console.log(`  [${displayIndex++}] Correspondance - ${step.from.name} -> ${step.to.name} (${step.duration_formatted})`);
             } else {
-                const ligne = step.route_short_name ? `Direction <${step.route_short_name}>` : step.mode;
+                const ligne = step.to ? `Direction <${step.to.name}>` : step.mode;
 
                 if (step.wait_sec > 0) {
                     console.log(`  [${displayIndex++}] Attente a ${step.from.name} - ${step.wait_formatted}`);
@@ -1156,3 +1163,4 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
 
     return formatted;
 }
+module.exports = { mainClc, findPathTimed, findPathTimedArrival, findPathTimedByIds, findPathTimedArrivalByIds, findStopsByName, buildAdjacency, isConnected, getConnectedComponents, buildNetworkTree };

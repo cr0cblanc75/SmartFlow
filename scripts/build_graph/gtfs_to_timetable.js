@@ -57,7 +57,11 @@ async function main() {
 
     // Index trip_id -> route_id
     const routeOfTrip = {};
-    for (const t of rawTrips) routeOfTrip[t.trip_id] = t.route_id;
+    const headsignOfTrip = {};
+    for (const t of rawTrips) {
+    routeOfTrip[t.trip_id] = t.route_id;
+    headsignOfTrip[t.trip_id] = (t.trip_headsign || t.route_short_name || "").trim();
+}
 
     console.log(`${Object.keys(routeOfTrip).length} trips indexes\n`);
 
@@ -106,10 +110,12 @@ async function main() {
 
             const routeId = routeOfTrip[tripId];
             if (!routeId) return;
+            const headsign = headsignOfTrip[tripId] || "";
+            const key = `${routeId}||${headsign}`;
 
             if (!timetable[stopId]) timetable[stopId] = {};
-            if (!timetable[stopId][routeId]) timetable[stopId][routeId] = new Set();
-            timetable[stopId][routeId].add(depSec);
+            if (!timetable[stopId][key]) timetable[stopId][key] = new Set();
+            timetable[stopId][key].add(depSec);
         });
 
         rl.on("close", () => {
