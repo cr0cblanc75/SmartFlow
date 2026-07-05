@@ -98,8 +98,10 @@ export default function PathScreen() {
             departureTime: formatedTimeDep,
             arrivalTime: formatedTimeDep === formatedTimeArr ? null : formatedTimeArr,
             wheelchair: wheelchair === "true",
-            debug: false,
+            debug: true,
         });
+
+        //console.log(res?.rawPath);
 
         if (res == null) {
             //console.log("No path");
@@ -117,6 +119,15 @@ export default function PathScreen() {
         setTimeArrString(res?.arrivalTime?.slice(0, 5) ?? "...");
         setPathFinded(res);
     }, [Depart, Arrivee, timeDep, timeArr]);
+
+    /*
+    setTimeout(() => {
+        mapRef.current?.drawRoute([
+            [48.8566, 2.3522],
+            [48.8584, 2.2945],
+            [48.86, 2.3],
+        ]);
+    }, 1000);*/
 
     const formatParisTime = (date: Date) => {
         return date.toLocaleTimeString("fr-FR", {

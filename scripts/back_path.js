@@ -1192,9 +1192,6 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
                 console.log(`  [${displayIndex++}] ${ligne} (${step.mode}) - ${step.from.name} -> ${step.to.name} - ${step.nb_stops} arret(s) - Depart ${step.departure_time} - Trajet ${formatDuration(step.travel_sec)}`);
             }
         });
-
-        console.log("RawPath:");
-        console.log(JSON.stringify(formatted.rawPath, null, 2));
     }
 
     return formatted;

@@ -6,14 +6,15 @@ import { useCustomTheme } from "@/hooks/themeContext";
 
 export interface MapRef {
     centerMap: (lat: number, lng: number, id?: number) => void;
+    drawRoute: (coords: number[][]) => void;
 }
 
 const Map = forwardRef<MapRef>((props, ref) => {
     const webViewRef = useRef<WebView>(null);
-    const { themeMode } = useCustomTheme(); 
+    const { themeMode } = useCustomTheme();
     const isDarkMode = themeMode === "dark";
 
-    const DarkModeMap = isDarkMode  ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+    const DarkModeMap = isDarkMode ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
     const mapFilter = isDarkMode ? "brightness(2.3) contrast(1) saturate(0.9)" : "none";
 
     useImperativeHandle(ref, () => ({
@@ -27,6 +28,15 @@ const Map = forwardRef<MapRef>((props, ref) => {
                 }),
             );
         },
+
+        drawRoute(coords: number[][]) {
+            webViewRef.current?.postMessage(
+                JSON.stringify({
+                    type: "DRAW_ROUTE",
+                    coordinates: coords,
+                }),
+            );
+        },
     }));
 
     return (
@@ -37,6 +47,12 @@ const Map = forwardRef<MapRef>((props, ref) => {
                 originWhitelist={["*"]}
                 javaScriptEnabled
                 domStorageEnabled
+                key="map-fixed"
+                cacheEnabled={false}
+                incognito
+                onMessage={(event) => {
+                    console.log("FROM WEBVIEW:", event.nativeEvent.data);
+                }}
                 source={{
                     html: `
                     <!doctype html>
@@ -70,14 +86,14 @@ const Map = forwardRef<MapRef>((props, ref) => {
                     });
 
 
-                    // 1. Créer un Pane dédié aux tuiles
+                    // ---------------------------------------- LAYER DES WAYPOINTS ----------------------------------------
+
+                    // Pane dédié aux tuiles
                     map.createPane("filteredTiles");
 
-                    // 2. Applique le filtre AU PANE (et pas aux images)
                     map.getPane("filteredTiles").style.filter = "${mapFilter}";
                     map.getPane("filteredTiles").style.transform = "translateZ(0)";
 
-                    // 3. Tiles dans ce pane
                     L.tileLayer("${DarkModeMap}", {
                         maxZoom: 18,
                         subdomains: "abcd",
@@ -102,36 +118,56 @@ const Map = forwardRef<MapRef>((props, ref) => {
                         });
                     }
                     renderMarkers();
+
                     
+                    // ---------------------------------------- RENDER COMPOSANT SUR LA MAP ----------------------------------------
+                    
+                    function handleMessage(event) {
+                        let message;
 
-                   document.addEventListener("message", (event) => {
-                    const message = JSON.parse(event.data);
+                        try {
+                            message =
+                                typeof event.data === "string"
+                                    ? JSON.parse(event.data)
+                                    : event.data;
+                        } catch (e) {
+                            console.log("Invalid message:", event.data);
+                            return;
+                        }
 
-                    if (message.type === "CENTER_MAP") {
-                        const zoom = 15;
+                         // >>>>>>>>>>>>>>>>>>>>>>>>>>>> CENTER MAP
+                        if (message.type === "CENTER_MAP") {
+                            const zoom = 15;
 
-                        // convertit lat/lng → pixels
-                        const point = map.project([message.lat, message.lng], zoom);
+                            const point = map.project([message.lat, message.lng], zoom);
+                            const offsetPoint = point.subtract([0, -150]);
+                            const newCenter = map.unproject(offsetPoint, zoom);
 
-                        // décale vers le haut
-                        const offsetPoint = point.subtract([0, -150]);
-
-                        // reconvertit pixels → lat/lng
-                        const newCenter = map.unproject(offsetPoint, zoom);
-
-                        map.flyTo(newCenter, zoom, {
-                            animate: true,
-                            duration: 1,
+                            map.flyTo(newCenter, zoom, {
+                                animate: true,
+                                duration: 1,
                             });
+
+                            if (message.id && markersById[message.id]) {
+                                setTimeout(() => {
+                                    markersById[message.id].openPopup();
+                                }, 600);
+                            }
                         }
 
-                        // ouvre le popup si id fourni
-                        if (message.id && markersById[message.id]) {
-                            setTimeout(() => {
-                                markersById[message.id].openPopup();
-                            }, 600); // attendre fin du flyTo
-                        }
-                    });           
+                    }
+
+                
+                    document.addEventListener("message", handleMessage);
+                    window.addEventListener("message", handleMessage);
+
+                    function log(msg) {
+                        window.ReactNativeWebView.postMessage(JSON.stringify({
+                            type: "LOG",
+                            data: msg
+                        }));
+                    }
+                    
 
                     </script>
 
