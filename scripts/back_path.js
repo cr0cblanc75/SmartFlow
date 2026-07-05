@@ -1041,6 +1041,22 @@ function findPathTimedArrivalByIds(graph, timetable, fromId, toId, options = {})
     return dijkstraTimedReverse(adj, nodeMap, timetable, new Set(fromIds), toIds, arrivalSec, wheelchair);
 }
 
+function buildRawPathWithCoordinates(rawPath, graph) {
+    const nodeMap = {};
+    for (const node of graph?.nodes || []) {
+        nodeMap[node.id] = node;
+    }
+
+    return (rawPath || []).map((pointId) => {
+        const node = nodeMap[pointId];
+        return {
+            id: pointId,
+            name: node?.name ?? null,
+            latitude: node?.latitude ?? null,
+            longitude: node?.longitude ?? null,
+        };
+    });
+}
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 
 /**
@@ -1104,6 +1120,8 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
         totalDuration: result.total_duration_formatted,
         nbCorrespondances: result.nb_correspondances,
         nbStops: result.nb_stops,
+        rawPath: buildRawPathWithCoordinates(result.raw_path, graph),
+        wheelchairAccessible: result.wheelchair_accessible,
         steps: result.steps.map((step) => {
             if (step.type === "correspondance") {
                 return {
@@ -1127,6 +1145,7 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
                 travelSec: step.travel_sec,
                 nbStops: step.nb_stops,
             };
+
         }),
     };
 
@@ -1137,6 +1156,7 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
         console.log(`------------------------------------------------------ Chemin trouve en ${elapsed}ms\n`);
 
         console.log(`${result.from.name} -> ${result.to.name}`);
+
         console.log(`Depart          : ${result.departure_time}`);
         console.log(`Arrivee estimee : ${result.arrival_time}`);
         console.log(`Duree totale    : ${result.total_duration_formatted}`);
@@ -1159,6 +1179,9 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
                 console.log(`  [${displayIndex++}] ${ligne} (${step.mode}) - ${step.from.name} -> ${step.to.name} - ${step.nb_stops} arret(s) - Depart ${step.departure_time} - Trajet ${formatDuration(step.travel_sec)}`);
             }
         });
+
+        console.log("RawPath:");
+        console.log(JSON.stringify(formatted.rawPath, null, 2));
     }
 
     return formatted;
