@@ -98,9 +98,10 @@ export default function PathScreen() {
             departureTime: formatedTimeDep,
             arrivalTime: formatedTimeDep === formatedTimeArr ? null : formatedTimeArr,
             wheelchair: wheelchair === "true",
-            debug: true,
+            debug: false,
         });
 
+        console.log(res?.rawPath);
         if (res == null) {
             //console.log("No path");
             setPathFinded(0);

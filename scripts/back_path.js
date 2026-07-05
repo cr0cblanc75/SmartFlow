@@ -1127,7 +1127,7 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
         nbCorrespondances: result.nb_correspondances,
         nbStops: result.nb_stops,
         rawPath: buildRawPathWithCoordinates(result.raw_path, graph),
-        wheelchairAccessible: result.wheelchair_accessible,
+
         steps: result.steps.map((step) => {
             if (step.type === "correspondance") {
                 return {
@@ -1152,7 +1152,6 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
                 travelSec: step.travel_sec,
                 nbStops: step.nb_stops,
             };
-
         }),
     };
 

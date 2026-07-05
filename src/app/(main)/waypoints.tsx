@@ -243,7 +243,7 @@ export default function WaypointScreen() {
 
                     <View style={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", gap: 20 }}>
                         <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground, opacity: isHandi ? 1 : 0.6, paddingHorizontal: Spacing.three }]} onPress={() => setisHandi((prev) => !prev)}>
-                            <HandiButton width={25} height={25} color={"#000000"} preserveAspectRatio="xMidYMid meet" />
+                            <HandiButton width={25} height={25} color={theme.MainTextBlack} preserveAspectRatio="xMidYMid meet" />
                         </Pressable>
 
                         <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={handlePath}>
