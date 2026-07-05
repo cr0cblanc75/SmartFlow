@@ -14,6 +14,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import LogoNavbar from "@/assets/Logo-NavBar.svg";
 import ClockButton from "@/assets/Clock.svg";
 import ReturnButton from "@/assets/ReturnButton.svg";
+import HandiButton from "@/assets/Handi_Icon.svg";
 
 import { AnimatedScreen } from "@/components/AnimatedScreen";
 import Map, { MapRef } from "@/leaflet/leaflet";
@@ -30,6 +31,7 @@ export default function WaypointScreen() {
     const [arrGiven, setArrGiven] = useState(false);
     const [timeArr, setTimeArr] = useState(new Date());
     const [showArr, setShowArr] = useState(false);
+    const [isHandi, setisHandi] = useState(false);
 
     const [departHasError, setDepartHasError] = useState(false);
     const [arriveeHasError, setArriveeHasError] = useState(false);
@@ -66,6 +68,7 @@ export default function WaypointScreen() {
                 Arrivee: Arrivee.trim(),
                 timeDep: timeDep.toISOString(),
                 timeArr: timeArr.toISOString(),
+                wheelchair: isHandi.toString(),
             },
         });
     };
@@ -238,9 +241,15 @@ export default function WaypointScreen() {
                         </ScrollView>
                     </View>
 
-                    <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={handlePath}>
-                        <ThemedText style={[styles.buttonText, { color: theme.MainTextBlack }]}>Go {" >"}</ThemedText>
-                    </Pressable>
+                    <View style={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", gap: 20 }}>
+                        <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground, opacity: isHandi ? 1 : 0.6, paddingHorizontal: Spacing.three }]} onPress={() => setisHandi((prev) => !prev)}>
+                            <HandiButton width={25} height={25} color={"#000000"} preserveAspectRatio="xMidYMid meet" />
+                        </Pressable>
+
+                        <Pressable style={[styles.button, { backgroundColor: theme.ButtonBackground }]} onPress={handlePath}>
+                            <ThemedText style={[styles.buttonText, { color: theme.MainTextBlack }]}>Go {" >"}</ThemedText>
+                        </Pressable>
+                    </View>
                 </View>
             </AnimatedScreen>
         </>

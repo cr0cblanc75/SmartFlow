@@ -624,8 +624,8 @@ function dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelc
             if (edge.mode !== "transfer") {
                 const stopTimes = timetable[id];
                 const timetableKey = `${edge.route_id}||${edge.route_short_name || ""}`;
-                const routeDeps = stopTimes ? (stopTimes[timetableKey] || stopTimes[edge.route_id]) : null;
-                
+                const routeDeps = stopTimes ? stopTimes[timetableKey] || stopTimes[edge.route_id] : null;
+
                 const nextDep = nextDeparture(routeDeps, currentSec);
 
                 // Pas de prochain depart -> on skip cette arete
@@ -850,8 +850,8 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
 
         for (const edge of adjReverse[id] || []) {
             const edgeIsWalk = isWalkMode(edge.mode);
-            const alpha = SMARTFLOW_DEFAULT_ALPHA;     
-            const beta = SMARTFLOW_DEFAULT_BETA;      
+            const alpha = SMARTFLOW_DEFAULT_ALPHA;
+            const beta = SMARTFLOW_DEFAULT_BETA;
             if (wheelchair && edge.wheelchair === false) continue;
             if (wheelchair && nodeMap[edge.to]?.wheelchair === false) continue;
 
@@ -861,7 +861,7 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
                 // On cherche le dernier depart depuis edge.to qui permet d'arriver a temps
                 const stopTimes = timetable[edge.to];
                 const timetableKey = `${edge.route_id}||${edge.route_short_name || ""}`;
-                const routeDeps = stopTimes ? (stopTimes[timetableKey] || stopTimes[edge.route_id]) : null;
+                const routeDeps = stopTimes ? stopTimes[timetableKey] || stopTimes[edge.route_id] : null;
                 // Le train doit partir au plus tard a currentSec - travelSec
                 const latestDep = lastDeparture(routeDeps, currentSec - edge.weight);
                 if (latestDep === null) continue;
