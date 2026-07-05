@@ -217,8 +217,6 @@ class MinHeap {
     }
 }
 
-const { calculerEmpreinteTroncon, calculerDistanceParTemps, FE_REFERENCE_SALE_G_PAR_KM } = require("./eco_calculator");
-
 const SMARTFLOW_DEFAULT_ALPHA = 0.5;
 const SMARTFLOW_DEFAULT_BETA = 0.5;
 const TEMPS_MAX_COURONNE_MIN = 90;
@@ -552,13 +550,18 @@ function buildSteps(pathNodes, nodeMap) {
 // (liste d'etapes), en completant chaque etape avec son detail CO2. Les
 // troncons pietons (isWalkMode) n'emettent pas de CO2 mais comptent quand
 // meme dans la distance totale, estimee a partir du temps de marche.
+
+import { calculerEmpreinteTroncon, calculerDistanceParTemps, FE_REFERENCE_SALE_G_PAR_KM } from "./eco_calculator";
+
 function calculateEcoMetricsForSteps(steps, nodeMap) {
     let totalCo2 = 0;
     let totalDistance = 0;
 
+    const nodeMapById = Object.fromEntries(nodeMap.nodes.map((node) => [node.id, node]));
+
     for (const step of steps) {
-        const fromNode = nodeMap[step.from.id];
-        const toNode = nodeMap[step.to.id];
+        const fromNode = nodeMapById[step.from.id]; 
+        const toNode = nodeMapById[step.to.id];
 
         if (isWalkMode(step.mode)) {
             const distanceKm = calculerDistanceParTemps(step.travel_sec || 0);
@@ -1116,6 +1119,31 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
     }
 
     const elapsed = Math.round(performance.now() - start);
+    const steps = result.steps.map((step) => {
+        if (step.type === "correspondance") {
+            return {
+                type: "correspondance",
+                from: step.from.name,
+                to: step.to.name,
+                duration: step.duration_formatted,
+            };
+        }
+
+        return {
+            type: "transport",
+            line: getStepDirectionLabel(step),
+            direction: getStepDirectionLabel(step),
+            mode: step.mode,
+            from: step.from.name,
+            to: step.to.name,
+            departure: step.departure_time,
+            wait: step.wait_formatted,
+            waitSec: step.wait_sec,
+            travel: formatDuration(step.travel_sec),
+            travelSec: step.travel_sec,
+            nbStops: step.nb_stops,
+        };
+    });
 
     const formatted = {
         elapsed,
@@ -1128,31 +1156,9 @@ export function mainClc({ graph, timetable, fromName, toName, fromId = null, toI
         nbStops: result.nb_stops,
         rawPath: buildRawPathWithCoordinates(result.raw_path, graph),
 
-        steps: result.steps.map((step) => {
-            if (step.type === "correspondance") {
-                return {
-                    type: "correspondance",
-                    from: step.from.name,
-                    to: step.to.name,
-                    duration: step.duration_formatted,
-                };
-            }
+        steps: steps,
 
-            return {
-                type: "transport",
-                line: getStepDirectionLabel(step),
-                direction: getStepDirectionLabel(step),
-                mode: step.mode,
-                from: step.from.name,
-                to: step.to.name,
-                departure: step.departure_time,
-                wait: step.wait_formatted,
-                waitSec: step.wait_sec,
-                travel: formatDuration(step.travel_sec),
-                travelSec: step.travel_sec,
-                nbStops: step.nb_stops,
-            };
-        }),
+        co2: calculateEcoMetricsForSteps(result.steps, graph),
     };
 
     // ─────────────────────────────────────────────

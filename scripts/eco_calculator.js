@@ -10,7 +10,7 @@ const VITESSE_MARCHE_KMH = 5;
 
 // 1. Facteurs d'émission d'exploitation (gCO2e / passager.km)
 const FE_BUS_PARIS = 128.52;
-const FE_BUS_PETITE_COURONNE = 136.90;
+const FE_BUS_PETITE_COURONNE = 136.9;
 const FE_BUS_GRANDE_COURONNE = 145.68;
 
 // Référence du « mode le plus sale » pour la normalisation carbone.
@@ -60,9 +60,7 @@ function calculerHaversineBrute(lat1, lon1, lat2, lon2) {
     const rLat1 = (lat1 * Math.PI) / 180;
     const rLat2 = (lat2 * Math.PI) / 180;
 
-    const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(rLat1) * Math.cos(rLat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(rLat1) * Math.cos(rLat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return RAYON_TERRE_KM * c;
@@ -76,7 +74,7 @@ function calculerHaversineBrute(lat1, lon1, lat2, lon2) {
  * @param {string} mode Mode de transport : 'bus', 'metro', 'train', 'tramway'
  * @returns {Object} { distanceKm, co2Grams, details }
  */
-function calculerEmpreinteTroncon(nodeA, nodeB, mode = 'bus') {
+function calculerEmpreinteTroncon(nodeA, nodeB, mode = "bus") {
     const distanceBrute = calculerHaversineBrute(nodeA.latitude, nodeA.longitude, nodeB.latitude, nodeB.longitude);
 
     let distanceKm = distanceBrute;
@@ -85,26 +83,26 @@ function calculerEmpreinteTroncon(nodeA, nodeB, mode = 'bus') {
     const modeNettoye = mode.toLowerCase().trim();
 
     switch (modeNettoye) {
-        case 'metro':
-        case 'métro':
+        case "metro":
+        case "métro":
             feExploitation = FE_EXPLOITATION_METRO;
             feFabrication = FE_FABRICATION_METRO;
             break;
 
-        case 'train':
-        case 'rer':
-        case 'transilien':
+        case "train":
+        case "rer":
+        case "transilien":
             feExploitation = FE_EXPLOITATION_RER_TRAIN;
             feFabrication = FE_FABRICATION_RER_TRAIN;
             break;
 
-        case 'tramway':
-        case 'tram':
+        case "tramway":
+        case "tram":
             feExploitation = FE_EXPLOITATION_TRAMWAY;
             feFabrication = FE_FABRICATION_TRAMWAY;
             break;
 
-        case 'bus':
+        case "bus":
         default:
             // Les bus suivent un parcours plus sinueux que la ligne droite.
             distanceKm = distanceBrute * FACTEUR_DETOUR_BUS;
@@ -126,7 +124,7 @@ function calculerEmpreinteTroncon(nodeA, nodeB, mode = 'bus') {
     return {
         distanceKm,
         co2Grams,
-        details: { mode: modeNettoye, feExploitation, feFabrication }
+        details: { mode: modeNettoye, feExploitation, feFabrication },
     };
 }
 
@@ -141,11 +139,4 @@ function calculerDistanceParTemps(travelSec) {
     return (travelSec / 3600) * VITESSE_MARCHE_KMH;
 }
 
-/*
-module.exports = {
-    calculerEmpreinteTroncon,
-    calculerHaversineBrute,
-    calculerDistanceParTemps,
-    FE_REFERENCE_SALE_G_PAR_KM
-};
-*/
+export { calculerEmpreinteTroncon, calculerDistanceParTemps, FE_REFERENCE_SALE_G_PAR_KM };

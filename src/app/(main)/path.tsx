@@ -101,7 +101,6 @@ export default function PathScreen() {
             debug: false,
         });
 
-        console.log(res?.rawPath);
         if (res == null) {
             //console.log("No path");
             setPathFinded(0);
@@ -127,7 +126,7 @@ export default function PathScreen() {
         });
     };
 
-    const ETAco2 = "203,5g";
+    const ETAco2 = pathFinded?.co2?.total_co2_grams ? `${pathFinded.co2.total_co2_grams.toFixed(2)}g` : "...";
     const ETAtime = pathFinded === 0 ? "Pas de chemin" : (pathFinded?.totalDuration ?? "chargement ...");
     const frames = pathFinded ? buildPathFrames(pathFinded.steps) : [];
 
