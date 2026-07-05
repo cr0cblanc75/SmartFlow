@@ -387,6 +387,21 @@ function nextDeparture(departures, afterSec) {
     return departures[lo] >= afterSec ? departures[lo] : null;
 }
 
+// ─── Lookup des departs pour une arete a un arret ─────────────────────────────
+// Cle canonique (nouveau format) : route_id||direction_id.
+// Fallbacks pour rester compatible avec les anciens graphes/timetables :
+//   - route_id||route_short_name (ancien format ou route_short_name = headsign)
+//   - route_id seul (tout premier format)
+function lookupDepartures(stopTimes, edge) {
+    if (!stopTimes) return null;
+    return (
+        stopTimes[`${edge.route_id}||${edge.direction_id ?? ""}`] ||
+        stopTimes[`${edge.route_id}||${edge.route_short_name || ""}`] ||
+        stopTimes[edge.route_id] ||
+        null
+    );
+}
+
 // ─── Construction liste d'adjacence ───────────────────────────────────────────
 function buildAdjacency(graph) {
     const adj = {};
@@ -505,8 +520,12 @@ function buildSteps(pathNodes, nodeMap) {
                 type: hop.mode === "transfer" ? "correspondance" : "trajet",
                 mode: hop.mode,
                 route_id: hop.route_id || null,
-                route_short_name: hop.route_short_name || null,
-                direction_label: hop.route_short_name || to.name || null,
+                route_short_name: hop.route_short_name || null, // n° de ligne ("1", "8")
+                route_long_name: hop.route_long_name || null,
+                direction_id: hop.direction_id ?? null,
+                // Terminus du sens (nouveau format). Retombe sur route_short_name
+                // pour les anciens graphes ou ce champ contenait deja le terminus.
+                direction_label: hop.headsign || hop.route_short_name || to.name || null,
                 color: hop.color || null,
                 text_color: hop.text_color || null,
                 from: { id: from.id, name: from.name },
@@ -612,8 +631,7 @@ function dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelc
             // Pour les trajets en vehicule, on cherche le prochain depart
             if (edge.mode !== "transfer") {
                 const stopTimes = timetable[id];
-                const timetableKey = `${edge.route_id}||${edge.route_short_name || ""}`;
-                const routeDeps = stopTimes ? stopTimes[timetableKey] || stopTimes[edge.route_id] : null;
+                const routeDeps = lookupDepartures(stopTimes, edge);
 
                 const nextDep = nextDeparture(routeDeps, currentSec);
 
@@ -636,6 +654,9 @@ function dijkstraTimed(adj, nodeMap, timetable, fromIds, toIds, startSec, wheelc
                         mode: edge.mode,
                         route_id: edge.route_id,
                         route_short_name: edge.route_short_name,
+                        route_long_name: edge.route_long_name,
+                        headsign: edge.headsign,
+                        direction_id: edge.direction_id,
                         color: edge.color,
                         text_color: edge.text_color,
                         boardingSec: boardSec,
@@ -801,8 +822,7 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
 
             if (!isWalkMode(edge.mode)) {
                 const stopTimes = timetable[edge.to];
-                const timetableKey = `${edge.route_id}||${edge.route_short_name || ""}`;
-                const routeDeps = stopTimes ? stopTimes[timetableKey] || stopTimes[edge.route_id] : null;
+                const routeDeps = lookupDepartures(stopTimes, edge);
                 const latestDep = lastDeparture(routeDeps, currentSec - edge.weight);
                 if (latestDep === null) continue;
                 boardSec = latestDep;
@@ -819,6 +839,9 @@ function dijkstraTimedReverse(adj, nodeMap, timetable, fromIds, toIds, arrivalSe
                         mode: edge.mode,
                         route_id: edge.route_id,
                         route_short_name: edge.route_short_name,
+                        route_long_name: edge.route_long_name,
+                        headsign: edge.headsign,
+                        direction_id: edge.direction_id,
                         color: edge.color,
                         text_color: edge.text_color,
                         boardingSec: boardSec,
@@ -1092,8 +1115,11 @@ function mainClc({ graph, timetable, fromName, toName, fromId = null, toId = nul
             if (step.type === "correspondance") {
                 console.log(`  [${displayIndex++}] Correspondance - ${step.from.name} -> ${step.to.name} (${step.duration_formatted})`);
             } else {
-                const directionLabel = getStepDirectionLabel(step) || step.mode;
-                const ligne = directionLabel ? `Direction <${directionLabel}>` : step.mode;
+                // n° de ligne + terminus du sens ("Ligne 1 dir. Château de Vincennes")
+                const line = step.route_short_name ? `Ligne ${step.route_short_name}` : step.mode;
+                const dir = step.direction_label && step.direction_label !== step.route_short_name
+                    ? ` dir. ${step.direction_label}` : "";
+                const ligne = `${line}${dir}`;
 
                 if (step.wait_sec > 0) {
                     console.log(`  [${displayIndex++}] Attente a ${step.from.name} - ${step.wait_formatted}`);

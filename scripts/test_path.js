@@ -14,8 +14,6 @@
  */
 
 const bp = require("./back_path.js");
-const graph = require("./graph.json");
-const timetable = require("./timetable.json");
 
 // ─── Lecture des arguments (sans dépendance externe) ──────────────────────────
 const argv = process.argv.slice(2);
@@ -29,6 +27,11 @@ function flag(name) {
 const departureTime = flag("time");
 const arrivalTime = flag("arrive");
 const wheelchair = argv.includes("--wheelchair");
+
+// Permet de tester une nouvelle génération sans écraser les fichiers courants :
+//   node test_path.js "A" "B" --graph graph.new.json --timetable timetable.new.json
+const graph = require("./" + (flag("graph") || "graph.json"));
+const timetable = require("./" + (flag("timetable") || "timetable.json"));
 
 if (!fromName || !toName) {
   console.log('Usage : node test_path.js "Départ" "Arrivée" [--time HH:MM | --arrive HH:MM] [--wheelchair]');
@@ -58,8 +61,9 @@ result.steps.forEach((step, i) => {
   if (step.type === "correspondance") {
     console.log(`  [${i + 1}] Correspondance  ${step.from.name} -> ${step.to.name}  (${step.duration_formatted})`);
   } else {
-    const label = step.route_short_name ? `Direction <${step.route_short_name}>` : step.mode;
-    console.log(`  [${i + 1}] ${label} (${step.mode})  ${step.from.name} -> ${step.to.name}  | ${step.nb_stops} arrêt(s) | ${step.duration_formatted}`);
+    const line = step.route_short_name ? `Ligne ${step.route_short_name}` : step.mode;
+    const dir = step.direction_label && step.direction_label !== step.route_short_name ? ` dir. ${step.direction_label}` : "";
+    console.log(`  [${i + 1}] ${line}${dir} (${step.mode})  ${step.from.name} -> ${step.to.name}  | ${step.nb_stops} arrêt(s) | ${step.duration_formatted}`);
     // Décommenter pour voir chaque arrêt intermédiaire :
     // console.log("       " + step.stops.map((s) => s.name).join(" -> "));
   }

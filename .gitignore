@@ -43,3 +43,6 @@ example
 /ios
 /android
 /scripts/build_graph/gtfs
+
+# backups locaux de données (ne pas committer)
+/scripts/*.backup.json

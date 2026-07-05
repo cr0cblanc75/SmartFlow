@@ -55,13 +55,17 @@ async function main() {
     const rawTrips = readCSV("trips.txt");
     const rawRoutes = readCSV("routes.txt");
 
-    // Index trip_id -> route_id
+    // Index trip_id -> route_id + direction_id.
+    // La cle des horaires est route_id||direction_id : elle sepable les deux sens
+    // (departs differents selon la direction) sans fragmenter comme le ferait le
+    // headsign (les short-turns partagent le meme direction_id). Doit rester
+    // strictement alignee avec la cle utilisee cote graphe et back_path.js.
     const routeOfTrip = {};
-    const headsignOfTrip = {};
+    const dirOfTrip = {};
     for (const t of rawTrips) {
-    routeOfTrip[t.trip_id] = t.route_id;
-    headsignOfTrip[t.trip_id] = (t.trip_headsign || t.route_short_name || "").trim();
-}
+        routeOfTrip[t.trip_id] = t.route_id;
+        dirOfTrip[t.trip_id] = (t.direction_id || "").trim();
+    }
 
     console.log(`${Object.keys(routeOfTrip).length} trips indexes\n`);
 
@@ -110,8 +114,8 @@ async function main() {
 
             const routeId = routeOfTrip[tripId];
             if (!routeId) return;
-            const headsign = headsignOfTrip[tripId] || "";
-            const key = `${routeId}||${headsign}`;
+            const dir = dirOfTrip[tripId] || "";
+            const key = `${routeId}||${dir}`;
 
             if (!timetable[stopId]) timetable[stopId] = {};
             if (!timetable[stopId][key]) timetable[stopId][key] = new Set();

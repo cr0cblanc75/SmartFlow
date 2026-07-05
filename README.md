@@ -44,6 +44,62 @@ You will of course have to create an account before behing able to proceed into 
 
 <br><br>
 
+## 🗺️ Backend data — generate the transport graph
+
+> **Important:** `scripts/graph.json` and `scripts/timetable.json` are **generated
+> files** and are **NOT committed** (they are too large for GitHub — `graph.json`
+> is over 100 MB). You must generate them once locally before the routing engine
+> can work. They are rebuilt from the official Île-de-France Mobilités (IDFM) GTFS.
+
+**1. Install dependencies** (the graph scripts need `papaparse` + `minimist`, both
+already in `package.json`):
+
+```bash
+npm install
+```
+
+> On Windows, if `npm` is blocked by the PowerShell execution policy
+> (`npm.ps1 cannot be loaded`), use `npm.cmd install` instead — `node` itself is
+> not blocked.
+
+**2. Download the IDFM GTFS** (~155 MB zip) and extract it into
+`scripts/build_graph/gtfs/` (this folder is git-ignored):
+
+```bash
+# from the scripts/build_graph/ folder
+# PowerShell:
+Invoke-WebRequest -Uri "https://eu.ftp.opendatasoft.com/stif/GTFS/IDFM-gtfs.zip" -OutFile IDFM-gtfs.zip
+Expand-Archive IDFM-gtfs.zip -DestinationPath gtfs
+# (or with curl:  curl -L -o IDFM-gtfs.zip "https://eu.ftp.opendatasoft.com/stif/GTFS/IDFM-gtfs.zip")
+```
+
+The extracted folder must contain `stops.txt`, `routes.txt`, `trips.txt`,
+`stop_times.txt`, `transfers.txt`.
+
+**3. Generate `graph.json` and `timetable.json`:**
+
+```bash
+# from the scripts/build_graph/ folder
+node --max-old-space-size=4096 gtfs_to_graph.js     --input ./gtfs --output ../graph.json
+node --max-old-space-size=4096 gtfs_to_timetable.js --input ./gtfs --output ../timetable.json
+```
+
+> `stop_times.txt` is ~1.2 GB, so each script streams it and takes a few minutes.
+> The `--max-old-space-size=4096` flag gives Node enough heap.
+
+**4. Test the routing engine** (no app needed):
+
+```bash
+# from the scripts/ folder
+node test_path.js "Nation" "Bastille" --time 08:30
+node test_path.js "Nation" "Bastille" --arrive 09:00   # arrival-time search
+```
+
+You should see the itinerary with the real line number and direction, e.g.
+`Ligne 1 dir. La Défense (Grande Arche) — 3 arrêt(s)`.
+
+<br><br>
+
 ## 📁 Architecture of the Projet
 
 ```
