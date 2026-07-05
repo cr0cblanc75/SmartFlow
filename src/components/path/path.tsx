@@ -82,7 +82,7 @@ export function PathFrame({ mode, label, stopStation = "<station>", isLast }: Pa
     };
 
     const labelM = getMetroLine(label);
-    console.log(label, labelM);
+    //console.log(label, labelM);
 
     const renderLeftIcon = () => {
         if (mode === "metro") {
